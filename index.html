@@ -22,6 +22,7 @@
             --primary-glow: rgba(59, 130, 246, 0.5);
             --danger: #ef4444;
             --danger-glow: rgba(239, 68, 68, 0.5);
+            --green: #10b981;
             --text: #e2e8f0;
             --text-secondary: #94a3b8;
             --text-muted: #64748b;
@@ -103,6 +104,7 @@
             max-width: 320px;
             margin-top: 8px;
         }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -450,6 +452,73 @@
             box-shadow: 0 0 28px var(--danger-glow);
         }
 
+        /* ── DISTANCE LEADERBOARD PANEL ───────────── */
+        .leaderboard-panel {
+            position: absolute;
+            top: 100px;
+            right: 16px;
+            z-index: 998;
+            background: rgba(17, 17, 24, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            min-width: 200px;
+            max-width: 260px;
+            max-height: 50vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+            font-size: 0.82rem;
+            display: none;
+            color: var(--text);
+        }
+        .leaderboard-panel.visible {
+            display: block;
+        }
+        .leaderboard-panel h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--accent);
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .leaderboard-item .rider-name {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+        .leaderboard-item .rider-name .color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .leaderboard-item .distance {
+            font-weight: 700;
+            color: var(--green);
+            font-variant-numeric: tabular-nums;
+        }
+        .leaderboard-item .distance.nearby {
+            color: #10b981;
+        }
+        .leaderboard-item.self {
+            background: rgba(245, 158, 11, 0.08);
+            border-radius: 6px;
+        }
+        .leaderboard-item.self .distance {
+            color: var(--accent);
+        }
+
         /* ── CUSTOM MARKER (injected via JS) ──────── */
         .custom-marker {
             background: transparent !important;
@@ -545,6 +614,14 @@
             }
             #lobby-screen .lobby-icon {
                 font-size: 3.5rem;
+            }
+            .leaderboard-panel {
+                top: 90px;
+                right: 8px;
+                min-width: 170px;
+                max-width: 200px;
+                font-size: 0.75rem;
+                padding: 10px 12px;
             }
         }
     </style>
@@ -654,6 +731,11 @@
                 <i class="fa-solid fa-arrow-right-from-bracket"></i> Leave
             </button>
         </div>
+        <!-- Distance Leaderboard Panel -->
+        <div class="leaderboard-panel" id="leaderboardPanel">
+            <h4><i class="fa-solid fa-ruler"></i> Rider Distances</h4>
+            <div id="leaderboardList"></div>
+        </div>
     </div>
 
     <!-- ═══════════ TOAST CONTAINER ═══════════════ -->
@@ -666,7 +748,6 @@
 
     <!-- Firebase Modular SDK v10 -->
     <script type="module">
-        // ─── FIREBASE IMPORTS ───────────────────────────
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
         import {
             getDatabase,
@@ -695,7 +776,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const analytics = getAnalytics(app);
-        console.log('✅ Firebase initialized — DB:', firebaseConfig.databaseURL);
+        console.log('✅ Firebase initialized');
 
         // ─── DOM REFERENCES ────────────────────────────
         const lobbyScreen = document.getElementById('lobby-screen');
@@ -722,33 +803,27 @@
         const mapPlayerCount = document.getElementById('mapPlayerCount');
         const btnCloseRoom = document.getElementById('btnCloseRoom');
         const btnLeaveRoom = document.getElementById('btnLeaveRoom');
+        const leaderboardPanel = document.getElementById('leaderboardPanel');
+        const leaderboardList = document.getElementById('leaderboardList');
         const toastContainer = document.getElementById('toastContainer');
 
         // ─── CONSTANTS ──────────────────────────────────
-        const LEADER_COLOR = '#ef4444'; // Red for leader
+        const LEADER_COLOR = '#ef4444';
         const MEMBER_COLORS = [
-            '#3b82f6', // Blue
-            '#10b981', // Green
-            '#f59e0b', // Amber
-            '#f97316', // Orange
-            '#8b5cf6', // Purple
-            '#ec4899', // Pink
-            '#14b8a6', // Teal
-            '#6366f1', // Indigo
-            '#84cc16', // Lime
-            '#06b6d4', // Cyan
+            '#3b82f6', '#10b981', '#f59e0b', '#f97316', '#8b5cf6',
+            '#ec4899', '#14b8a6', '#6366f1', '#84cc16', '#06b6d4'
         ];
 
         // ─── APPLICATION STATE ─────────────────────────
         let currentRoomId = null;
-        let currentPlayerKey = null; // sanitized name used as Firebase key
+        let currentPlayerKey = null;
         let currentDisplayName = null;
         let currentColor = null;
         let isLeader = false;
         let geoWatchId = null;
         let roomUnsubscribe = null;
         let onDisconnectRef = null;
-        let markersMap = new Map(); // playerKey -> L.marker
+        let markersMap = new Map();
         let isLeaving = false;
 
         // ─── LEAFLET MAP INIT ─────────────────────────
@@ -759,27 +834,23 @@
             attributionControl: true,
         });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            attribution: '&copy; OpenStreetMap contributors',
             maxZoom: 19,
         }).addTo(map);
 
-        function invalidateMapSize() {
-            setTimeout(() => map.invalidateSize(), 250);
-        }
+        function invalidateMapSize() { setTimeout(() => map.invalidateSize(), 250); }
         window.addEventListener('resize', () => map.invalidateSize());
 
-        // ─── TOAST HELPER ──────────────────────────────
+        // ─── TOAST ─────────────────────────────────────
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.textContent = message;
             toastContainer.appendChild(toast);
-            setTimeout(() => {
-                if (toast.parentNode) toast.remove();
-            }, 3300);
+            setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3300);
         }
 
-        // ─── SANITIZE NAME FOR FIREBASE KEY ────────────
+        // ─── SANITIZE NAME ────────────────────────────
         function sanitizeName(name) {
             return name.trim().replace(/[\.\$\#\[\]\/]/g, '_').replace(/\s+/g, '_');
         }
@@ -788,19 +859,14 @@
         function generateRoomId() {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             let result = '';
-            for (let i = 0; i < 6; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
+            for (let i = 0; i < 6; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
             return result;
         }
 
         // ─── GET CURRENT POSITION (PROMISE) ────────────
         function getCurrentPositionPromise(options = {}) {
             return new Promise((resolve, reject) => {
-                if (!navigator.geolocation) {
-                    reject(new Error('Geolocation not supported'));
-                    return;
-                }
+                if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
                 navigator.geolocation.getCurrentPosition(resolve, reject, {
                     enableHighAccuracy: true,
                     timeout: options.timeout || 8000,
@@ -813,12 +879,14 @@
         function showLobby() {
             mapScreen.classList.remove('active');
             lobbyScreen.style.display = 'flex';
+            leaderboardPanel.classList.remove('visible');
             invalidateMapSize();
         }
 
         function showMapScreen() {
             lobbyScreen.style.display = 'none';
             mapScreen.classList.add('active');
+            leaderboardPanel.classList.add('visible');
             invalidateMapSize();
         }
 
@@ -840,33 +908,20 @@
             const crownHTML = isLeaderMarker ?
                 '<span style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:16px;filter:drop-shadow(0 0 4px rgba(0,0,0,0.6));">👑</span>' :
                 '';
-
             return `
             <div style="
-              width:${size}px;
-              height:${size}px;
-              border-radius:50%;
-              background:${color};
-              border:${borderWidth}px solid ${borderColor};
+              width:${size}px; height:${size}px; border-radius:50%;
+              background:${color}; border:${borderWidth}px solid ${borderColor};
               box-shadow: 0 0 ${shadowBlur}px ${color}, 0 3px 12px rgba(0,0,0,0.55);
-              animation: ${pulseAnim};
-              position:relative;
-              display:flex;
-              align-items:center;
-              justify-content:center;
-              font-weight:900;
-              font-size:${size * 0.4}px;
-              color:#fff;
-              text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-              letter-spacing:0;
-              line-height:1;
+              animation: ${pulseAnim}; position:relative;
+              display:flex; align-items:center; justify-content:center;
+              font-weight:900; font-size:${size * 0.4}px; color:#fff;
+              text-shadow: 0 1px 2px rgba(0,0,0,0.5); letter-spacing:0; line-height:1;
             ">
-              ${crownHTML}
-              ${initial}
+              ${crownHTML}${initial}
             </div>`;
         }
 
-        // Inject marker pulse keyframes
         const pulseStyleEl = document.createElement('style');
         pulseStyleEl.textContent = `
           @keyframes markerPulse {
@@ -876,20 +931,22 @@
         `;
         document.head.appendChild(pulseStyleEl);
 
-        // ─── UPSERT MARKER ON MAP ──────────────────────
+        // ─── FORMAT DISTANCE ──────────────────────────
+        function formatDistance(meters) {
+            if (meters < 5) return 'Nearby';
+            if (meters < 1000) return `${Math.round(meters)}m`;
+            return `${(meters / 1000).toFixed(1)} km`;
+        }
+
+        // ─── UPSERT MARKER (without distance) ──────────
         function upsertMarker(playerKey, displayName, lat, lng, color, isLeaderMarker, isSelf) {
             if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return;
-
             const initial = (displayName || playerKey).charAt(0).toUpperCase();
             const size = isLeaderMarker ? 38 : 32;
 
             if (markersMap.has(playerKey)) {
-                // Update existing marker
                 const marker = markersMap.get(playerKey);
                 marker.setLatLng([lat, lng]);
-                const label = isSelf ? `${displayName} (You)` : displayName;
-                const tooltipLabel = (isLeaderMarker && !isSelf) ? `👑 ${label}` : label;
-                marker.setTooltipContent(tooltipLabel);
                 marker.setIcon(
                     L.divIcon({
                         html: buildMarkerHTML(color, initial, isLeaderMarker, isSelf),
@@ -900,7 +957,6 @@
                     })
                 );
             } else {
-                // Create new marker
                 const icon = L.divIcon({
                     html: buildMarkerHTML(color, initial, isLeaderMarker, isSelf),
                     className: 'custom-marker',
@@ -908,22 +964,11 @@
                     iconAnchor: [(size + 6) / 2, (size + 6) / 2],
                     tooltipAnchor: [0, -(size + 6) / 2 - 6],
                 });
-                const label = isSelf ? `${displayName} (You)` : displayName;
-                const tooltipLabel = (isLeaderMarker && !isSelf) ? `👑 ${label}` : label;
-
-                const marker = L.marker([lat, lng], { icon })
-                    .addTo(map)
-                    .bindTooltip(tooltipLabel, {
-                        permanent: false,
-                        direction: 'top',
-                        offset: [0, -(size + 6) / 2],
-                        opacity: 0.95,
-                    });
+                const marker = L.marker([lat, lng], { icon }).addTo(map);
                 markersMap.set(playerKey, marker);
             }
         }
 
-        // ─── REMOVE SINGLE MARKER ──────────────────────
         function removeMarker(playerKey) {
             if (markersMap.has(playerKey)) {
                 map.removeLayer(markersMap.get(playerKey));
@@ -931,70 +976,119 @@
             }
         }
 
-        // ─── CLEAR ALL MARKERS ─────────────────────────
         function clearAllMarkers() {
-            for (const [key, marker] of markersMap) {
-                map.removeLayer(marker);
-            }
+            for (const [key, marker] of markersMap) map.removeLayer(marker);
             markersMap.clear();
         }
 
-        // ─── FIT MAP TO ALL MARKERS ────────────────────
         function fitMapToMarkers() {
             if (markersMap.size === 0) return;
             const bounds = [];
-            for (const marker of markersMap.values()) {
-                bounds.push(marker.getLatLng());
+            for (const marker of markersMap.values()) bounds.push(marker.getLatLng());
+            if (bounds.length === 1) map.setView(bounds[0], 17, { animate: true });
+            else map.fitBounds(L.latLngBounds(bounds), { padding: [60, 60], maxZoom: 16, animate: true });
+        }
+
+        // ─── UPDATE DISTANCES & LEADERBOARD ────────────
+        function updateDistancesAndLeaderboard(playersData, myLat, myLng) {
+            const distances = [];
+            if (myLat == null || myLng == null || isNaN(myLat) || isNaN(myLng)) {
+                // No valid self coordinates, show empty
+                leaderboardList.innerHTML = '<div style="text-align:center;color:var(--text-muted);">Waiting for your location...</div>';
+                return;
             }
-            if (bounds.length === 1) {
-                map.setView(bounds[0], 17, { animate: true });
-            } else {
-                map.fitBounds(L.latLngBounds(bounds), {
-                    padding: [60, 60],
-                    maxZoom: 16,
-                    animate: true,
-                });
+            const myLatLng = L.latLng(myLat, myLng);
+
+            for (const [playerKey, playerData] of Object.entries(playersData)) {
+                if (!playerData || typeof playerData.lat !== 'number' || typeof playerData.lng !== 'number') continue;
+                const displayName = playerData.displayName || playerKey;
+                const color = playerData.color || '#ccc';
+                const isSelf = (playerKey === currentPlayerKey);
+                let distanceText = '';
+                if (!isSelf) {
+                    const otherLatLng = L.latLng(playerData.lat, playerData.lng);
+                    const dist = myLatLng.distanceTo(otherLatLng); // meters
+                    distanceText = formatDistance(dist);
+                } else {
+                    distanceText = 'You';
+                }
+                distances.push({ playerKey, displayName, color, distanceText, isSelf, lat: playerData.lat, lng: playerData.lng });
+            }
+
+            // Sort: self first, then by distance
+            distances.sort((a, b) => {
+                if (a.isSelf) return -1;
+                if (b.isSelf) return 1;
+                return 0; // keep original order
+            });
+
+            // Build leaderboard HTML
+            let html = '';
+            for (const item of distances) {
+                const dotColor = item.color;
+                const distClass = item.distanceText === 'Nearby' ? 'nearby' : '';
+                html += `
+                    <div class="leaderboard-item ${item.isSelf ? 'self' : ''}">
+                        <span class="rider-name">
+                            <span class="color-dot" style="background:${dotColor};"></span>
+                            ${item.displayName}${item.isSelf ? ' (You)' : ''}
+                        </span>
+                        <span class="distance ${distClass}">${item.distanceText}</span>
+                    </div>`;
+            }
+            leaderboardList.innerHTML = html;
+
+            // Update tooltips on map for each marker with distance info
+            for (const item of distances) {
+                if (item.isSelf) continue;
+                const marker = markersMap.get(item.playerKey);
+                if (marker) {
+                    let tooltipText = item.displayName;
+                    if (item.distanceText) {
+                        tooltipText += ` - ${item.distanceText}`;
+                        if (item.distanceText === 'Nearby') tooltipText += ' 📍';
+                    }
+                    const isLeaderMarker = (playersData[item.playerKey]?.role === 'leader');
+                    if (isLeaderMarker) tooltipText = '👑 ' + tooltipText;
+                    marker.setTooltipContent(tooltipText);
+                }
+            }
+            // Also update self tooltip
+            const selfMarker = markersMap.get(currentPlayerKey);
+            if (selfMarker) {
+                selfMarker.setTooltipContent(`${currentDisplayName} (You)`);
             }
         }
 
         // ─── SETUP ROOM LISTENER ───────────────────────
         function setupRoomListener(roomId) {
-            // Unsubscribe any previous listener
             if (roomUnsubscribe) {
                 roomUnsubscribe();
                 roomUnsubscribe = null;
             }
 
-            // Listen EXACTLY on /rooms/{roomID}/players
             const playersRef = ref(db, `rooms/${roomId}/players`);
-
             roomUnsubscribe = onValue(playersRef, (snapshot) => {
                 if (isLeaving) return;
-
                 const playersData = snapshot.val();
 
-                // If null, the room may have been deleted or no players exist
                 if (playersData === null) {
-                    // Check if the room itself still exists
                     get(ref(db, `rooms/${roomId}`)).then((roomSnap) => {
                         if (!roomSnap.exists() && !isLeaving) {
-                            console.log('🚫 Room has been deleted — returning to lobby.');
                             showToast('The room has been closed by the leader.', 'warning');
                             forceReturnToLobby();
                         } else if (!isLeaving) {
-                            // Room exists but no players — clear all markers
                             const staleKeys = new Set(markersMap.keys());
                             staleKeys.forEach(k => removeMarker(k));
                             mapPlayerCount.textContent = '0';
+                            leaderboardList.innerHTML = '';
                         }
                     }).catch(() => {});
                     return;
                 }
 
-                // Track which player keys are present in the latest data
                 const activePlayerKeys = new Set();
-                const leaderName = currentRoomId ? null : null; // We'll determine leader from data
-
+                // Upsert all markers
                 for (const [playerKey, playerData] of Object.entries(playersData)) {
                     if (playerData && typeof playerData.lat === 'number' && typeof playerData.lng === 'number') {
                         activePlayerKeys.add(playerKey);
@@ -1002,26 +1096,20 @@
                         const color = playerData.color || MEMBER_COLORS[0];
                         const isLeaderMarker = (playerData.role === 'leader');
                         const isSelf = (playerKey === currentPlayerKey);
-                        upsertMarker(playerKey, displayName, playerData.lat, playerData.lng, color, isLeaderMarker,
-                            isSelf);
+                        upsertMarker(playerKey, displayName, playerData.lat, playerData.lng, color, isLeaderMarker, isSelf);
                     }
                 }
 
-                // Remove markers for players no longer in the room
+                // Remove stale markers
                 const currentMarkerKeys = new Set(markersMap.keys());
                 for (const existingKey of currentMarkerKeys) {
-                    if (!activePlayerKeys.has(existingKey)) {
-                        removeMarker(existingKey);
-                    }
+                    if (!activePlayerKeys.has(existingKey)) removeMarker(existingKey);
                 }
 
-                // Update player count
                 mapPlayerCount.textContent = activePlayerKeys.size;
-
-                // Fit map bounds
                 fitMapToMarkers();
 
-                // Update leader status for current user
+                // Update leader status
                 if (currentPlayerKey && playersData[currentPlayerKey]) {
                     const myData = playersData[currentPlayerKey];
                     if (myData.role === 'leader') {
@@ -1035,111 +1123,74 @@
                     }
                 }
 
+                // Compute distances and update leaderboard
+                const myData = currentPlayerKey ? playersData[currentPlayerKey] : null;
+                const myLat = myData ? myData.lat : null;
+                const myLng = myData ? myData.lng : null;
+                updateDistancesAndLeaderboard(playersData, myLat, myLng);
+
                 console.log(`📍 Room update: ${activePlayerKeys.size} riders online`);
             }, (error) => {
                 console.error('❌ Room listener error:', error);
-                if (!isLeaving) {
-                    showToast('Connection error. Check console.', 'error');
-                }
+                if (!isLeaving) showToast('Connection error. Check console.', 'error');
             });
         }
 
         // ─── FORCE RETURN TO LOBBY ────────────────────
         function forceReturnToLobby() {
             stopTracking();
-            if (roomUnsubscribe) {
-                roomUnsubscribe();
-                roomUnsubscribe = null;
-            }
-            if (onDisconnectRef) {
-                onDisconnectRef.cancel().catch(() => {});
-                onDisconnectRef = null;
-            }
+            if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
+            if (onDisconnectRef) { onDisconnectRef.cancel().catch(() => {}); onDisconnectRef = null; }
             clearAllMarkers();
-            currentRoomId = null;
-            currentPlayerKey = null;
-            currentDisplayName = null;
-            currentColor = null;
-            isLeader = false;
-            mapPlayerCount.textContent = '0';
-            mapRoomCode.textContent = '------';
-            btnCloseRoom.style.display = 'none';
-            btnLeaveRoom.style.display = 'none';
-            showLobby();
-            hideAllModals();
+            currentRoomId = null; currentPlayerKey = null; currentDisplayName = null;
+            currentColor = null; isLeader = false;
+            mapPlayerCount.textContent = '0'; mapRoomCode.textContent = '------';
+            btnCloseRoom.style.display = 'none'; btnLeaveRoom.style.display = 'none';
+            leaderboardList.innerHTML = '';
+            leaderboardPanel.classList.remove('visible');
+            showLobby(); hideAllModals();
             isLeaving = false;
         }
 
-        // ─── STOP TRACKING ────────────────────────────
         function stopTracking() {
             if (geoWatchId !== null) {
                 navigator.geolocation.clearWatch(geoWatchId);
                 geoWatchId = null;
-                console.log('🛑 Geolocation watch stopped.');
             }
         }
 
-        // ─── START WATCHING POSITION ───────────────────
         function startWatchingPosition(roomId, playerKey, displayName, color, role) {
             if (!navigator.geolocation) {
                 showToast('Geolocation not supported by your browser.', 'error');
                 return false;
             }
-
             stopTracking();
-
             const playerRef = ref(db, `rooms/${roomId}/players/${playerKey}`);
-
-            // Schedule cleanup on disconnect
-            if (onDisconnectRef) {
-                onDisconnectRef.cancel().catch(() => {});
-            }
+            if (onDisconnectRef) { onDisconnectRef.cancel().catch(() => {}); }
             onDisconnectRef = onDisconnect(playerRef);
-            onDisconnectRef.remove().then(() => {
-                console.log('🔌 onDisconnect scheduled for:', playerKey);
-            }).catch((err) => {
-                console.warn('⚠️ onDisconnect setup warning:', err);
-            });
+            onDisconnectRef.remove().then(() => console.log('🔌 onDisconnect scheduled')).catch(err => console.warn(err));
 
             geoWatchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const { latitude, longitude, accuracy } = position.coords;
                     update(playerRef, {
-                        lat: latitude,
-                        lng: longitude,
-                        accuracy: accuracy,
-                        displayName: displayName,
-                        color: color,
-                        role: role,
-                        updatedAt: Date.now(),
-                    }).then(() => {
-                        // Hide GPS loading if visible
-                        createGpsLoading.classList.remove('visible');
-                        joinGpsLoading.classList.remove('visible');
-                    }).catch((err) => {
-                        console.error('❌ Error updating location:', err);
-                    });
-
-                    // If only this user on map, center on them
+                        lat: latitude, lng: longitude, accuracy,
+                        displayName, color, role, updatedAt: Date.now()
+                    }).catch(err => console.error(err));
+                    createGpsLoading.classList.remove('visible');
+                    joinGpsLoading.classList.remove('visible');
                     if (markersMap.size <= 1 && markersMap.has(playerKey)) {
                         map.setView([latitude, longitude], 17, { animate: true });
                     }
                 },
                 (error) => {
-                    console.error('❌ Geolocation watch error:', error);
+                    console.error('❌ Geolocation error:', error);
                     let msg = 'Location error. ';
                     switch (error.code) {
-                        case error.PERMISSION_DENIED:
-                            msg += 'Please allow location access in browser settings.';
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            msg += 'Position unavailable. Waiting for GPS...';
-                            break;
-                        case error.TIMEOUT:
-                            msg += 'GPS request timed out. Retrying...';
-                            break;
-                        default:
-                            msg += 'Unknown error. Retrying...';
+                        case error.PERMISSION_DENIED: msg += 'Please allow location access.'; break;
+                        case error.POSITION_UNAVAILABLE: msg += 'GPS signal unavailable. Retrying...'; break;
+                        case error.TIMEOUT: msg += 'GPS request timed out. Retrying...'; break;
+                        default: msg += 'Unknown error.';
                     }
                     showToast(msg, 'warning');
                 }, {
@@ -1148,511 +1199,220 @@
                     timeout: 5000,
                 }
             );
-
-            console.log('📍 Watching position for:', displayName, 'in room:', roomId, 'role:', role);
+            console.log('📍 Watching position for:', displayName);
             return true;
         }
 
-        // ─── SAVE INITIAL POSITION ─────────────────────
         async function saveInitialPosition(roomId, playerKey, displayName, color, role) {
             try {
                 const position = await getCurrentPositionPromise({ timeout: 8000 });
                 const { latitude, longitude, accuracy } = position.coords;
                 await set(ref(db, `rooms/${roomId}/players/${playerKey}`), {
-                    lat: latitude,
-                    lng: longitude,
-                    accuracy: accuracy,
-                    displayName: displayName,
-                    color: color,
-                    role: role,
-                    updatedAt: Date.now(),
+                    lat: latitude, lng: longitude, accuracy,
+                    displayName, color, role, updatedAt: Date.now()
                 });
-                console.log('📍 Initial position saved for:', displayName);
                 return true;
             } catch (err) {
-                console.warn('⚠️ Could not get initial position:', err.message);
-                // Still save a placeholder so the player appears (with 0,0 or approximate)
-                // The watchPosition will update it soon
+                console.warn('⚠️ Initial position failed:', err.message);
                 if (err.code === err.PERMISSION_DENIED) {
                     showToast('Location permission denied. Please enable GPS.', 'error');
                     return false;
                 }
-                // Timeout or unavailable — save a pending entry
                 await set(ref(db, `rooms/${roomId}/players/${playerKey}`), {
-                    lat: 0,
-                    lng: 0,
-                    accuracy: 9999,
-                    displayName: displayName,
-                    color: color,
-                    role: role,
-                    updatedAt: Date.now(),
-                    pending: true,
+                    lat: 0, lng: 0, accuracy: 9999,
+                    displayName, color, role, updatedAt: Date.now(), pending: true
                 });
                 showToast('GPS is initializing. Your location will update shortly.', 'info');
                 return true;
             }
         }
 
-        // ─── ASSIGN COLOR FOR NEW PLAYER ───────────────
         function assignColorForPlayer(existingPlayers, isLeaderPlayer) {
             if (isLeaderPlayer) return LEADER_COLOR;
             const usedColors = new Set();
             if (existingPlayers) {
-                for (const playerData of Object.values(existingPlayers)) {
-                    if (playerData && playerData.color) {
-                        usedColors.add(playerData.color);
-                    }
+                for (const p of Object.values(existingPlayers)) {
+                    if (p && p.color) usedColors.add(p.color);
                 }
             }
-            // Remove leader color from consideration
             usedColors.add(LEADER_COLOR);
-            for (const color of MEMBER_COLORS) {
-                if (!usedColors.has(color)) return color;
-            }
-            // If all colors used, pick a random member color
+            for (const color of MEMBER_COLORS) if (!usedColors.has(color)) return color;
             return MEMBER_COLORS[Math.floor(Math.random() * MEMBER_COLORS.length)];
         }
 
-        // ─── REMOVE PLAYER FROM ROOM ──────────────────
         async function removePlayerFromRoom(roomId, playerKey) {
-            const playerRef = ref(db, `rooms/${roomId}/players/${playerKey}`);
-            try {
-                if (onDisconnectRef) {
-                    await onDisconnectRef.cancel().catch(() => {});
-                    onDisconnectRef = null;
-                }
-                await remove(playerRef);
-                console.log('🗑️ Player removed:', playerKey);
-            } catch (err) {
-                console.error('❌ Error removing player:', err);
-            }
+            if (onDisconnectRef) { await onDisconnectRef.cancel().catch(() => {}); onDisconnectRef = null; }
+            await remove(ref(db, `rooms/${roomId}/players/${playerKey}`)).catch(err => console.error(err));
         }
 
-        // ─── LEAVE ROOM (MEMBER) ──────────────────────
         async function leaveRoom() {
             if (isLeaving) return;
             isLeaving = true;
-            const roomId = currentRoomId;
-            const playerKey = currentPlayerKey;
+            const roomId = currentRoomId, playerKey = currentPlayerKey;
             stopTracking();
-            if (roomUnsubscribe) {
-                roomUnsubscribe();
-                roomUnsubscribe = null;
-            }
-            if (roomId && playerKey) {
-                await removePlayerFromRoom(roomId, playerKey);
-            }
+            if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
+            if (roomId && playerKey) await removePlayerFromRoom(roomId, playerKey);
             clearAllMarkers();
-            currentRoomId = null;
-            currentPlayerKey = null;
-            currentDisplayName = null;
-            currentColor = null;
-            isLeader = false;
-            mapPlayerCount.textContent = '0';
-            mapRoomCode.textContent = '------';
-            btnCloseRoom.style.display = 'none';
-            btnLeaveRoom.style.display = 'none';
-            onDisconnectRef = null;
-            isLeaving = false;
-            showLobby();
-            hideAllModals();
+            currentRoomId = null; currentPlayerKey = null; currentDisplayName = null;
+            currentColor = null; isLeader = false;
+            mapPlayerCount.textContent = '0'; mapRoomCode.textContent = '------';
+            btnCloseRoom.style.display = 'none'; btnLeaveRoom.style.display = 'none';
+            leaderboardList.innerHTML = ''; leaderboardPanel.classList.remove('visible');
+            onDisconnectRef = null; isLeaving = false;
+            showLobby(); hideAllModals();
             showToast('You have left the room.', 'info');
-            console.log('👋 Left room successfully.');
         }
 
-        // ─── CLOSE ROOM (LEADER) ──────────────────────
         async function closeRoom() {
             if (isLeaving) return;
             isLeaving = true;
             const roomId = currentRoomId;
             stopTracking();
-            if (roomUnsubscribe) {
-                roomUnsubscribe();
-                roomUnsubscribe = null;
-            }
-            if (onDisconnectRef) {
-                await onDisconnectRef.cancel().catch(() => {});
-                onDisconnectRef = null;
-            }
-            if (roomId) {
-                try {
-                    await remove(ref(db, `rooms/${roomId}`));
-                    console.log('💀 Room deleted:', roomId);
-                } catch (err) {
-                    console.error('❌ Error deleting room:', err);
-                    showToast('Error deleting room. Try again.', 'error');
-                    isLeaving = false;
-                    return;
-                }
-            }
+            if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
+            if (onDisconnectRef) { await onDisconnectRef.cancel().catch(() => {}); onDisconnectRef = null; }
+            if (roomId) await remove(ref(db, `rooms/${roomId}`)).catch(err => console.error(err));
             clearAllMarkers();
-            currentRoomId = null;
-            currentPlayerKey = null;
-            currentDisplayName = null;
-            currentColor = null;
-            isLeader = false;
-            mapPlayerCount.textContent = '0';
-            mapRoomCode.textContent = '------';
-            btnCloseRoom.style.display = 'none';
-            btnLeaveRoom.style.display = 'none';
-            onDisconnectRef = null;
-            isLeaving = false;
-            showLobby();
-            hideAllModals();
+            currentRoomId = null; currentPlayerKey = null; currentDisplayName = null;
+            currentColor = null; isLeader = false;
+            mapPlayerCount.textContent = '0'; mapRoomCode.textContent = '------';
+            btnCloseRoom.style.display = 'none'; btnLeaveRoom.style.display = 'none';
+            leaderboardList.innerHTML = ''; leaderboardPanel.classList.remove('visible');
+            onDisconnectRef = null; isLeaving = false;
+            showLobby(); hideAllModals();
             showToast('Room closed. All members have been removed.', 'success');
-            console.log('💀 Room closed successfully.');
         }
 
         // ─── CREATE ROOM FLOW ─────────────────────────
         async function createRoomFlow() {
             const displayName = createNameInput.value.trim();
             const password = createPasswordInput.value.trim();
-
-            if (!displayName) {
-                showToast('Please enter your name.', 'error');
-                createNameInput.focus();
-                return;
-            }
-            if (!/^\d{8}$/.test(password)) {
-                showToast('Password must be exactly 8 digits (0-9).', 'error');
-                createPasswordInput.focus();
-                return;
-            }
-
+            if (!displayName) { showToast('Please enter your name.', 'error'); return; }
+            if (!/^\d{8}$/.test(password)) { showToast('Password must be exactly 8 digits.', 'error'); return; }
             const playerKey = sanitizeName(displayName);
-            if (!playerKey) {
-                showToast('Invalid name. Please use valid characters.', 'error');
-                return;
-            }
-
-            // Disable button and show loading
-            submitCreate.disabled = true;
-            submitCreate.textContent = 'Creating...';
+            if (!playerKey) { showToast('Invalid name.', 'error'); return; }
+            submitCreate.disabled = true; submitCreate.textContent = 'Creating...';
             createGpsLoading.classList.add('visible');
 
-            // Generate unique room ID
-            let roomId;
-            let attempts = 0;
-            const maxAttempts = 15;
+            let roomId, attempts = 0;
             do {
-                roomId = generateRoomId();
-                attempts++;
-                const roomSnap = await get(ref(db, `rooms/${roomId}`));
-                if (!roomSnap.exists()) break;
-                if (attempts >= maxAttempts) {
-                    showToast('Could not generate unique Room ID. Please try again.', 'error');
-                    submitCreate.disabled = false;
-                    submitCreate.textContent = 'Create Squad';
-                    createGpsLoading.classList.remove('visible');
-                    return;
+                roomId = generateRoomId(); attempts++;
+                if (!(await get(ref(db, `rooms/${roomId}`))).exists()) break;
+                if (attempts >= 15) {
+                    showToast('Could not generate unique Room ID.', 'error');
+                    submitCreate.disabled = false; submitCreate.textContent = 'Create Squad';
+                    createGpsLoading.classList.remove('visible'); return;
                 }
             } while (true);
 
-            // Create room node
-            try {
-                await set(ref(db, `rooms/${roomId}`), {
-                    password: password,
-                    leader: displayName,
-                    createdAt: Date.now(),
-                });
-                console.log('🏠 Room created:', roomId);
-            } catch (err) {
-                console.error('❌ Error creating room:', err);
-                showToast('Error creating room. Check Firebase rules.', 'error');
-                submitCreate.disabled = false;
-                submitCreate.textContent = 'Create Squad';
-                createGpsLoading.classList.remove('visible');
-                return;
-            }
+            await set(ref(db, `rooms/${roomId}`), { password, leader: displayName, createdAt: Date.now() });
+            currentRoomId = roomId; currentPlayerKey = playerKey; currentDisplayName = displayName;
+            currentColor = LEADER_COLOR; isLeader = true;
 
-            // Set state
-            currentRoomId = roomId;
-            currentPlayerKey = playerKey;
-            currentDisplayName = displayName;
-            currentColor = LEADER_COLOR;
-            isLeader = true;
-
-            // Save initial position IMMEDIATELY
-            const posSaved = await saveInitialPosition(roomId, playerKey, displayName, LEADER_COLOR, 'leader');
-
-            // Update UI
+            await saveInitialPosition(roomId, playerKey, displayName, LEADER_COLOR, 'leader');
             mapRoomCode.textContent = roomId;
-            btnCloseRoom.style.display = 'inline-flex';
-            btnLeaveRoom.style.display = 'none';
-            hideAllModals();
-            showMapScreen();
-
-            // Start watching for continuous updates
-            const trackingOk = startWatchingPosition(roomId, playerKey, displayName, LEADER_COLOR, 'leader');
-
-            // Setup room listener
+            btnCloseRoom.style.display = 'inline-flex'; btnLeaveRoom.style.display = 'none';
+            hideAllModals(); showMapScreen();
+            startWatchingPosition(roomId, playerKey, displayName, LEADER_COLOR, 'leader');
             setupRoomListener(roomId);
-
-            // Reset button state
-            submitCreate.disabled = false;
-            submitCreate.textContent = 'Create Squad';
+            submitCreate.disabled = false; submitCreate.textContent = 'Create Squad';
             createGpsLoading.classList.remove('visible');
-
-            if (!posSaved && !trackingOk) {
-                showToast('GPS unavailable. Please check location settings.', 'warning');
-            } else {
-                showToast(`Room "${roomId}" created! Share the code with your squad.`, 'success');
-            }
+            showToast(`Room "${roomId}" created! Share the code.`, 'success');
         }
 
-        // ─── JOIN ROOM FLOW ───────────────────────────
         async function joinRoomFlow() {
             const displayName = joinNameInput.value.trim();
             const roomId = joinRoomIdInput.value.trim().toUpperCase();
             const password = joinPasswordInput.value.trim();
-
-            if (!displayName) {
-                showToast('Please enter your name.', 'error');
-                joinNameInput.focus();
-                return;
-            }
-            if (!roomId || roomId.length !== 6) {
-                showToast('Room ID must be exactly 6 characters.', 'error');
-                joinRoomIdInput.focus();
-                return;
-            }
-            if (!/^\d{8}$/.test(password)) {
-                showToast('Password must be exactly 8 digits (0-9).', 'error');
-                joinPasswordInput.focus();
-                return;
-            }
-
+            if (!displayName) { showToast('Please enter your name.', 'error'); return; }
+            if (!roomId || roomId.length !== 6) { showToast('Room ID must be 6 characters.', 'error'); return; }
+            if (!/^\d{8}$/.test(password)) { showToast('Password must be 8 digits.', 'error'); return; }
             const playerKey = sanitizeName(displayName);
-            if (!playerKey) {
-                showToast('Invalid name. Please use valid characters.', 'error');
-                return;
-            }
-
-            // Disable button and show loading
-            submitJoin.disabled = true;
-            submitJoin.textContent = 'Joining...';
+            if (!playerKey) { showToast('Invalid name.', 'error'); return; }
+            submitJoin.disabled = true; submitJoin.textContent = 'Joining...';
             joinGpsLoading.classList.add('visible');
 
-            // Validate room
-            let roomData;
-            try {
-                const roomSnap = await get(ref(db, `rooms/${roomId}`));
-                if (!roomSnap.exists()) {
-                    showToast('Room not found. Check the Room ID.', 'error');
-                    submitJoin.disabled = false;
-                    submitJoin.textContent = 'Join Squad';
-                    joinGpsLoading.classList.remove('visible');
-                    return;
-                }
-                roomData = roomSnap.val();
-            } catch (err) {
-                console.error('❌ Error fetching room:', err);
-                showToast('Error connecting to database.', 'error');
-                submitJoin.disabled = false;
-                submitJoin.textContent = 'Join Squad';
-                joinGpsLoading.classList.remove('visible');
-                return;
+            const roomSnap = await get(ref(db, `rooms/${roomId}`));
+            if (!roomSnap.exists()) {
+                showToast('Room not found.', 'error');
+                submitJoin.disabled = false; submitJoin.textContent = 'Join Squad';
+                joinGpsLoading.classList.remove('visible'); return;
             }
-
-            // Validate password
+            const roomData = roomSnap.val();
             if (roomData.password !== password) {
-                showToast('Incorrect password. Access denied.', 'error');
-                submitJoin.disabled = false;
-                submitJoin.textContent = 'Join Squad';
-                joinGpsLoading.classList.remove('visible');
-                return;
+                showToast('Incorrect password.', 'error');
+                submitJoin.disabled = false; submitJoin.textContent = 'Join Squad';
+                joinGpsLoading.classList.remove('visible'); return;
             }
-
-            // Check for duplicate name
             const existingPlayers = roomData.players || {};
             if (existingPlayers[playerKey]) {
-                showToast('A rider with this name is already in the room. Choose another name.', 'error');
-                submitJoin.disabled = false;
-                submitJoin.textContent = 'Join Squad';
-                joinGpsLoading.classList.remove('visible');
-                return;
+                showToast('Name already taken in this room.', 'error');
+                submitJoin.disabled = false; submitJoin.textContent = 'Join Squad';
+                joinGpsLoading.classList.remove('visible'); return;
             }
-
-            // Assign color
-            const role = 'member';
             const assignedColor = assignColorForPlayer(existingPlayers, false);
+            currentRoomId = roomId; currentPlayerKey = playerKey; currentDisplayName = displayName;
+            currentColor = assignedColor; isLeader = false;
 
-            // Set state
-            currentRoomId = roomId;
-            currentPlayerKey = playerKey;
-            currentDisplayName = displayName;
-            currentColor = assignedColor;
-            isLeader = false;
-
-            // Save initial position IMMEDIATELY
-            const posSaved = await saveInitialPosition(roomId, playerKey, displayName, assignedColor, role);
-
-            // Update UI
+            await saveInitialPosition(roomId, playerKey, displayName, assignedColor, 'member');
             mapRoomCode.textContent = roomId;
-            btnCloseRoom.style.display = 'none';
-            btnLeaveRoom.style.display = 'inline-flex';
-            hideAllModals();
-            showMapScreen();
-
-            // Start watching for continuous updates
-            const trackingOk = startWatchingPosition(roomId, playerKey, displayName, assignedColor, role);
-
-            // Setup room listener
+            btnCloseRoom.style.display = 'none'; btnLeaveRoom.style.display = 'inline-flex';
+            hideAllModals(); showMapScreen();
+            startWatchingPosition(roomId, playerKey, displayName, assignedColor, 'member');
             setupRoomListener(roomId);
-
-            // Reset button state
-            submitJoin.disabled = false;
-            submitJoin.textContent = 'Join Squad';
+            submitJoin.disabled = false; submitJoin.textContent = 'Join Squad';
             joinGpsLoading.classList.remove('visible');
-
-            if (!posSaved && !trackingOk) {
-                showToast('GPS unavailable. Please check location settings.', 'warning');
-            } else {
-                showToast(`Joined room "${roomId}"! Ride safe!`, 'success');
-            }
-            console.log('🚪 Joined room:', roomId, 'color:', assignedColor);
+            showToast(`Joined room "${roomId}"!`, 'success');
         }
 
         // ─── EVENT LISTENERS ───────────────────────────
         btnCreateRoom.addEventListener('click', () => {
-            if (currentRoomId) {
-                showToast('You are already in a room. Leave first.', 'warning');
-                return;
-            }
-            createNameInput.value = '';
-            createPasswordInput.value = '';
+            if (currentRoomId) { showToast('You are already in a room.', 'warning'); return; }
+            createNameInput.value = ''; createPasswordInput.value = '';
             createGpsLoading.classList.remove('visible');
-            submitCreate.disabled = false;
-            submitCreate.textContent = 'Create Squad';
+            submitCreate.disabled = false; submitCreate.textContent = 'Create Squad';
             createModal.classList.add('active');
             setTimeout(() => createNameInput.focus(), 150);
         });
-
         btnJoinRoom.addEventListener('click', () => {
-            if (currentRoomId) {
-                showToast('You are already in a room. Leave first.', 'warning');
-                return;
-            }
-            joinNameInput.value = '';
-            joinRoomIdInput.value = '';
-            joinPasswordInput.value = '';
+            if (currentRoomId) { showToast('You are already in a room.', 'warning'); return; }
+            joinNameInput.value = ''; joinRoomIdInput.value = ''; joinPasswordInput.value = '';
             joinGpsLoading.classList.remove('visible');
-            submitJoin.disabled = false;
-            submitJoin.textContent = 'Join Squad';
+            submitJoin.disabled = false; submitJoin.textContent = 'Join Squad';
             joinModal.classList.add('active');
             setTimeout(() => joinNameInput.focus(), 150);
         });
-
-        cancelCreate.addEventListener('click', () => {
-            createModal.classList.remove('active');
-            createGpsLoading.classList.remove('visible');
-            submitCreate.disabled = false;
-            submitCreate.textContent = 'Create Squad';
-        });
-        cancelJoin.addEventListener('click', () => {
-            joinModal.classList.remove('active');
-            joinGpsLoading.classList.remove('visible');
-            submitJoin.disabled = false;
-            submitJoin.textContent = 'Join Squad';
-        });
+        cancelCreate.addEventListener('click', () => { createModal.classList.remove('active'); createGpsLoading.classList.remove('visible'); submitCreate.disabled = false; submitCreate.textContent = 'Create Squad'; });
+        cancelJoin.addEventListener('click', () => { joinModal.classList.remove('active'); joinGpsLoading.classList.remove('visible'); submitJoin.disabled = false; submitJoin.textContent = 'Join Squad'; });
         cancelClose.addEventListener('click', () => confirmCloseModal.classList.remove('active'));
-
         submitCreate.addEventListener('click', createRoomFlow);
         submitJoin.addEventListener('click', joinRoomFlow);
-
         btnLeaveRoom.addEventListener('click', leaveRoom);
-        btnCloseRoom.addEventListener('click', () => {
-            confirmCloseModal.classList.add('active');
-        });
-        confirmClose.addEventListener('click', async () => {
-            confirmCloseModal.classList.remove('active');
-            await closeRoom();
-        });
+        btnCloseRoom.addEventListener('click', () => confirmCloseModal.classList.add('active'));
+        confirmClose.addEventListener('click', async () => { confirmCloseModal.classList.remove('active'); await closeRoom(); });
 
-        // Keyboard shortcuts
-        createPasswordInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') createRoomFlow();
-        });
-        createNameInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') createPasswordInput.focus();
-        });
-        joinRoomIdInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') joinPasswordInput.focus();
-        });
-        joinPasswordInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') joinRoomFlow();
-        });
-        joinNameInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') joinRoomIdInput.focus();
-        });
+        // Keyboard & input restrictions
+        createPasswordInput.addEventListener('keydown', e => { if (e.key === 'Enter') createRoomFlow(); });
+        createNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') createPasswordInput.focus(); });
+        joinRoomIdInput.addEventListener('keydown', e => { if (e.key === 'Enter') joinPasswordInput.focus(); });
+        joinPasswordInput.addEventListener('keydown', e => { if (e.key === 'Enter') joinRoomFlow(); });
+        joinNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') joinRoomIdInput.focus(); });
+        [createPasswordInput, joinPasswordInput].forEach(inp => inp.addEventListener('input', () => inp.value = inp.value.replace(/[^0-9]/g, '').slice(0, 8)));
+        joinRoomIdInput.addEventListener('input', () => joinRoomIdInput.value = joinRoomIdInput.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase());
+        [createModal, joinModal, confirmCloseModal].forEach(modal => modal.addEventListener('click', e => { if (e.target === modal) { modal.classList.remove('active'); createGpsLoading.classList.remove('visible'); joinGpsLoading.classList.remove('visible'); submitCreate.disabled = false; submitCreate.textContent = 'Create Squad'; submitJoin.disabled = false; submitJoin.textContent = 'Join Squad'; } }));
 
-        // Restrict password inputs to digits
-        [createPasswordInput, joinPasswordInput].forEach(inp => {
-            inp.addEventListener('input', () => {
-                inp.value = inp.value.replace(/[^0-9]/g, '').slice(0, 8);
-            });
-        });
-
-        // Restrict room ID input
-        joinRoomIdInput.addEventListener('input', () => {
-            joinRoomIdInput.value = joinRoomIdInput.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase();
-        });
-
-        // Close modals on overlay click
-        [createModal, joinModal, confirmCloseModal].forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                    createGpsLoading.classList.remove('visible');
-                    joinGpsLoading.classList.remove('visible');
-                    submitCreate.disabled = false;
-                    submitCreate.textContent = 'Create Squad';
-                    submitJoin.disabled = false;
-                    submitJoin.textContent = 'Join Squad';
-                }
-            });
-        });
-
-        // Handle browser close
-        window.addEventListener('beforeunload', () => {
-            stopTracking();
-        });
-
-        // Handle tab visibility
+        window.addEventListener('beforeunload', stopTracking);
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible' && currentRoomId && currentPlayerKey && !isLeaving) {
-                if (!roomUnsubscribe) {
-                    console.log('🔄 Re-establishing room listener...');
-                    setupRoomListener(currentRoomId);
-                }
-                if (geoWatchId === null && !isLeaving) {
-                    console.log('🔄 Restarting location tracking...');
-                    startWatchingPosition(currentRoomId, currentPlayerKey, currentDisplayName, currentColor,
-                        isLeader ? 'leader' : 'member');
-                }
+                if (!roomUnsubscribe) setupRoomListener(currentRoomId);
+                if (geoWatchId === null) startWatchingPosition(currentRoomId, currentPlayerKey, currentDisplayName, currentColor, isLeader ? 'leader' : 'member');
                 invalidateMapSize();
             }
         });
 
-        // ─── INITIAL SETUP ─────────────────────────────
-        showLobby();
-        hideAllModals();
-        mapRoomCode.textContent = '------';
-        mapPlayerCount.textContent = '0';
-        btnCloseRoom.style.display = 'none';
-        btnLeaveRoom.style.display = 'none';
-
-        console.log('🏍️  Riding Squad ready!');
-        console.log('📋 Create a room or join with a code to start sharing your location.');
-        console.log('🗺️  Map: Leaflet + OpenStreetMap');
-        console.log('🔥  Backend: Firebase Realtime Database');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('🐛 BUG FIXES APPLIED:');
-        console.log('  1. Leader now saves initial position immediately via getCurrentPosition');
-        console.log('  2. Distinct marker colors — Leader=RED, members=get unique colors');
-        console.log('  3. GPS: enableHighAccuracy=true, maximumAge=0, timeout=5000');
-        console.log('  4. onValue listener on /rooms/{roomID}/players — no duplicate markers');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        // Init
+        showLobby(); hideAllModals();
+        mapRoomCode.textContent = '------'; mapPlayerCount.textContent = '0';
+        console.log('🏍️ Riding Squad ready with real-time distance calculator!');
     </script>
 </body>
 </html>
