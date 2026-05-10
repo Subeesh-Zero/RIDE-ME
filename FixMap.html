@@ -531,29 +531,47 @@
             height: 10px;
             border-radius: 50%;
             display: inline-block;
+            flex-shrink: 0;
         }
         .leaderboard-item .distance {
             font-weight: 700;
             color: var(--green);
             font-variant-numeric: tabular-nums;
             margin-right: 6px;
+            white-space: nowrap;
         }
         .leaderboard-item .distance.nearby {
             color: #10b981;
         }
-        .leaderboard-item .target-icon {
+        /* ── PROFESSIONAL SVG TARGET ICON ────────── */
+        .target-icon {
             cursor: pointer;
             color: var(--text-muted);
-            font-size: 1rem;
-            transition: color var(--transition);
-            margin-left: 4px;
+            transition: color var(--transition), transform var(--transition);
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: transparent;
+            transition: all var(--transition);
         }
-        .leaderboard-item .target-icon:hover {
+        .target-icon:hover {
             color: var(--accent);
+            background: rgba(245, 158, 11, 0.1);
+            transform: scale(1.1);
         }
-        .leaderboard-item .target-icon.active {
+        .target-icon.active {
             color: var(--accent);
-            filter: drop-shadow(0 0 6px var(--accent));
+            filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
+            background: rgba(245, 158, 11, 0.12);
+        }
+        .target-icon svg {
+            width: 15px;
+            height: 15px;
+            display: block;
         }
         .leaderboard-item.self {
             background: rgba(245, 158, 11, 0.08);
@@ -563,33 +581,39 @@
             color: var(--accent);
         }
 
-        /* ── VIEW ALL BUTTON ─────────────────────── */
-        .view-all-btn {
+        /* ── PROFESSIONAL FAB: VIEW ALL ──────────── */
+        .fab-view-all {
             position: absolute;
-            bottom: 24px;
+            bottom: 28px;
             right: 24px;
             z-index: 999;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 50px;
-            padding: 10px 18px;
-            color: var(--text);
-            font-weight: 600;
-            font-size: 0.85rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: none;
             cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            transition: all var(--transition);
+            box-shadow: 0 6px 22px rgba(59, 130, 246, 0.45), 0 2px 8px rgba(0, 0, 0, 0.4);
             display: flex;
             align-items: center;
-            gap: 6px;
-            border: 1px solid var(--accent);
-            color: var(--accent);
+            justify-content: center;
+            transition: all var(--transition);
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
         }
-        .view-all-btn:hover {
-            background: var(--surface-2);
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        .fab-view-all:hover {
+            background: #2563eb;
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.65), 0 4px 12px rgba(0, 0, 0, 0.5);
+            transform: translateY(-2px) scale(1.04);
+        }
+        .fab-view-all:active {
+            transform: scale(0.92);
+            box-shadow: 0 3px 12px rgba(59, 130, 246, 0.3);
+        }
+        .fab-view-all svg {
+            width: 22px;
+            height: 22px;
+            display: block;
         }
 
         /* ── CUSTOM MARKER (injected via JS) ──────── */
@@ -700,6 +724,16 @@
                 top: 65px;
                 font-size: 0.7rem;
                 padding: 6px 12px;
+            }
+            .fab-view-all {
+                bottom: 20px;
+                right: 16px;
+                width: 44px;
+                height: 44px;
+            }
+            .fab-view-all svg {
+                width: 20px;
+                height: 20px;
             }
         }
     </style>
@@ -819,9 +853,14 @@
             <h4><i class="fa-solid fa-ruler"></i> Rider Distances</h4>
             <div id="leaderboardList"></div>
         </div>
-        <!-- VIEW ALL BUTTON -->
-        <button class="view-all-btn" id="viewAllBtn">
-            <i class="fa-solid fa-globe"></i> View All
+        <!-- PROFESSIONAL SVG FAB: VIEW ALL -->
+        <button class="fab-view-all" id="viewAllBtn" title="Fit all riders on screen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 4 20 4 20 8"/>
+                <polyline points="8 20 4 20 4 16"/>
+                <polyline points="20 16 20 20 16 20"/>
+                <polyline points="4 8 4 4 8 4"/>
+            </svg>
         </button>
     </div>
 
@@ -911,9 +950,9 @@
         let geoWatchId = null;
         let roomUnsubscribe = null;
         let onDisconnectRef = null;
-        let markersMap = new Map(); // playerKey -> L.marker
+        let markersMap = new Map();
         let isLeaving = false;
-        let trackedPlayer = null; // key of currently tracked player for camera following
+        let trackedPlayer = null;
 
         // ─── LEAFLET MAP INIT ─────────────────────────
         const map = L.map('map', {
@@ -1057,7 +1096,6 @@
                         tooltipAnchor: [0, -(size + 6) / 2 - 6],
                     })
                 );
-                // Camera follow if this is the tracked player
                 if (trackedPlayer === playerKey && !isLeaving) {
                     map.setView([lat, lng], map.getZoom(), { animate: true });
                 }
@@ -1096,6 +1134,16 @@
                 map.fitBounds(L.latLngBounds(bounds), { padding: [50, 50], maxZoom: 16, animate: true });
             }
         }
+
+        // ── SVG CROSSHAIR ICON FOR TARGET ──────────────
+        const crosshairSVG = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <line x1="12" y1="1" x2="12" y2="6"/>
+                <line x1="12" y1="18" x2="12" y2="23"/>
+                <line x1="1" y1="12" x2="6" y2="12"/>
+                <line x1="18" y1="12" x2="23" y2="12"/>
+            </svg>`;
 
         // ─── UPDATE DISTANCES & LEADERBOARD ────────────
         function updateDistancesAndLeaderboard(playersData, myLat, myLng) {
@@ -1137,13 +1185,12 @@
                         </span>
                         <span class="distance ${item.distanceText === 'Nearby' ? 'nearby' : ''}">${item.distanceText}</span>
                         <span class="target-icon ${targetClass}" data-player="${item.playerKey}" title="Track this rider">
-                            🎯
+                            ${crosshairSVG}
                         </span>
                     </div>`;
             }
             leaderboardList.innerHTML = html;
 
-            // Update tooltips on map
             for (const item of distances) {
                 const marker = markersMap.get(item.playerKey);
                 if (!marker) continue;
@@ -1193,7 +1240,6 @@
                         const color = playerData.color || MEMBER_COLORS[0];
                         const isLeaderMarker = (playerData.role === 'leader');
                         const isSelf = (playerKey === currentPlayerKey);
-                        // Upsert marker – no auto centering except if tracked
                         upsertMarker(playerKey, displayName, playerData.lat, playerData.lng, color, isLeaderMarker,
                             isSelf);
                     }
@@ -1293,8 +1339,6 @@
                         role: role,
                         updatedAt: Date.now(),
                     }).catch(err => console.error(err));
-
-                    // No automatic setView here – handled by upsertMarker only if tracked
                 },
                 (error) => {
                     console.error('❌ Geolocation watch error:', error);
@@ -1494,7 +1538,6 @@
             showMapScreen();
             startWatchingPosition(roomId, playerKey, displayName, LEADER_COLOR, 'leader');
             setupRoomListener(roomId);
-            // Optionally track self on start
             trackedPlayer = playerKey;
 
             submitCreate.disabled = false;
@@ -1566,7 +1609,7 @@
             showMapScreen();
             startWatchingPosition(roomId, playerKey, displayName, assignedColor, 'member');
             setupRoomListener(roomId);
-            trackedPlayer = playerKey; // start tracking self
+            trackedPlayer = playerKey;
 
             submitJoin.disabled = false;
             submitJoin.textContent = 'Join Squad';
@@ -1584,37 +1627,26 @@
                 } else {
                     trackedPlayer = playerKey;
                 }
-                // Force immediate recenter if there's a marker
                 const marker = markersMap.get(playerKey);
                 if (marker && trackedPlayer) {
                     const latlng = marker.getLatLng();
                     map.setView(latlng, map.getZoom(), { animate: true });
                 }
-                // Update UI
-                updateDistancesAndLeaderboard(
-                    currentRoomId ? (/* will be refreshed soon anyway */ {}) : {},
-                    null, null
-                );
+                updateDistancesAndLeaderboard({}, null, null);
             }
         });
 
         // ─── MAP DRAG DISABLES TRACKING ────────────────
         map.on('dragstart', () => {
             trackedPlayer = null;
-            // refresh leaderboard to remove active target icon
-            if (currentRoomId && !isLeaving) {
-                // We don't have data here, but the next onValue will update UI
-                // For immediate feedback we can just clear the active class
-                const activeTargets = leaderboardList.querySelectorAll('.target-icon.active');
-                activeTargets.forEach(icon => icon.classList.remove('active'));
-            }
+            const activeTargets = leaderboardList.querySelectorAll('.target-icon.active');
+            activeTargets.forEach(icon => icon.classList.remove('active'));
         });
 
         // ─── VIEW ALL BUTTON ───────────────────────────
         viewAllBtn.addEventListener('click', () => {
-            trackedPlayer = null; // disable tracking when fitting all
+            trackedPlayer = null;
             fitMapToMarkers();
-            // update leaderboard to remove active target
             const activeTargets = leaderboardList.querySelectorAll('.target-icon.active');
             activeTargets.forEach(icon => icon.classList.remove('active'));
         });
@@ -1695,7 +1727,7 @@
         hideGpsWarning();
         mapRoomCode.textContent = '------';
         mapPlayerCount.textContent = '0';
-        console.log('🏍️ Riding Squad ready – smart camera & strict GPS active.');
+        console.log('🏍️ Riding Squad ready – professional SVG icons & strict GPS active.');
     </script>
 </body>
 </html>
