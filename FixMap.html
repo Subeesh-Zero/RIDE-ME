@@ -13,7 +13,7 @@
     <style>
         :root {
             --bg: #06060d;
-            --surface: #111118;
+            --surface: rgba(17, 17, 24, 0.72);
             --surface-2: #1a1a24;
             --surface-3: #222230;
             --accent: #f59e0b;
@@ -27,7 +27,7 @@
             --text: #e2e8f0;
             --text-secondary: #94a3b8;
             --text-muted: #64748b;
-            --border: #2a2a38;
+            --border: rgba(42, 42, 56, 0.6);
             --radius: 14px;
             --radius-sm: 10px;
             --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -188,6 +188,8 @@
         }
         .modal-card {
             background: var(--surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 28px 24px;
@@ -348,15 +350,17 @@
             height: 100%;
             z-index: 1;
         }
+
+        /* ── MAP HEADER (translucent) ─────────────── */
         .map-header {
             position: absolute;
             top: 16px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 999;
-            background: rgba(17, 17, 24, 0.94);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background: rgba(17, 17, 24, 0.7);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             border: 1px solid var(--border);
             border-radius: 50px;
             padding: 10px 20px;
@@ -367,6 +371,7 @@
             flex-wrap: wrap;
             justify-content: center;
             transition: all var(--transition);
+            max-width: calc(100vw - 32px);
         }
         .map-header .room-info {
             display: flex;
@@ -377,7 +382,7 @@
             letter-spacing: 0.5px;
         }
         .map-header .room-code-badge {
-            background: var(--surface-3);
+            background: rgba(34, 34, 48, 0.7);
             border: 1px solid var(--accent);
             color: var(--accent);
             padding: 6px 14px;
@@ -397,7 +402,7 @@
             }
         }
         .map-header .player-count {
-            background: var(--surface-3);
+            background: rgba(34, 34, 48, 0.7);
             border-radius: 50px;
             padding: 6px 12px;
             font-size: 0.8rem;
@@ -456,11 +461,13 @@
         /* ── GPS WARNING BAR ──────────────────────── */
         .gps-warning-bar {
             position: absolute;
-            top: 80px;
+            top: 85px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 998;
-            background: rgba(249, 115, 22, 0.9);
+            background: rgba(249, 115, 22, 0.88);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             color: #fff;
             padding: 8px 18px;
             border-radius: 50px;
@@ -470,8 +477,8 @@
             align-items: center;
             gap: 8px;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            max-width: calc(100vw - 40px);
+            text-align: center;
         }
         .gps-warning-bar.visible {
             display: flex;
@@ -480,23 +487,23 @@
             color: #fff;
         }
 
-        /* ── DISTANCE LEADERBOARD PANEL ───────────── */
+        /* ── DISTANCE LEADERBOARD PANEL (translucent) ── */
         .leaderboard-panel {
             position: absolute;
             top: 100px;
             right: 16px;
             z-index: 997;
-            background: rgba(17, 17, 24, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(17, 17, 24, 0.68);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 12px 16px;
+            padding: 14px 16px;
             min-width: 220px;
             max-width: 280px;
-            max-height: 50vh;
+            max-height: 45vh;
             overflow-y: auto;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
             font-size: 0.82rem;
             display: none;
             color: var(--text);
@@ -507,7 +514,7 @@
         .leaderboard-panel h4 {
             font-size: 0.9rem;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             color: var(--accent);
             text-align: center;
             letter-spacing: 0.5px;
@@ -516,8 +523,9 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 6px 4px;
+            padding: 7px 4px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            gap: 6px;
         }
         .leaderboard-item .rider-name {
             display: flex;
@@ -525,6 +533,10 @@
             gap: 6px;
             font-weight: 600;
             flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .leaderboard-item .rider-name .color-dot {
             width: 10px;
@@ -537,40 +549,39 @@
             font-weight: 700;
             color: var(--green);
             font-variant-numeric: tabular-nums;
-            margin-right: 6px;
             white-space: nowrap;
+            flex-shrink: 0;
         }
         .leaderboard-item .distance.nearby {
             color: #10b981;
         }
-        /* ── PROFESSIONAL SVG TARGET ICON ────────── */
-        .target-icon {
+        /* ── EYE ICON (SVG) ───────────────────────── */
+        .eye-icon {
             cursor: pointer;
             color: var(--text-muted);
-            transition: color var(--transition), transform var(--transition);
+            transition: color var(--transition), transform var(--transition), background var(--transition);
             flex-shrink: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 22px;
-            height: 22px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             background: transparent;
-            transition: all var(--transition);
         }
-        .target-icon:hover {
+        .eye-icon:hover {
             color: var(--accent);
-            background: rgba(245, 158, 11, 0.1);
+            background: rgba(245, 158, 11, 0.12);
             transform: scale(1.1);
         }
-        .target-icon.active {
+        .eye-icon.active {
             color: var(--accent);
-            filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
-            background: rgba(245, 158, 11, 0.12);
+            filter: drop-shadow(0 0 7px rgba(245, 158, 11, 0.6));
+            background: rgba(245, 158, 11, 0.14);
         }
-        .target-icon svg {
-            width: 15px;
-            height: 15px;
+        .eye-icon svg {
+            width: 16px;
+            height: 16px;
             display: block;
         }
         .leaderboard-item.self {
@@ -641,7 +652,7 @@
             color: #fff;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
             animation: toastIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                toastOut 0.3s 3s ease forwards;
+                toastOut 0.3s 3.2s ease forwards;
             pointer-events: auto;
             max-width: 350px;
             text-align: center;
@@ -685,18 +696,19 @@
             .map-header {
                 top: 8px;
                 padding: 8px 12px;
-                gap: 8px;
+                gap: 6px;
                 border-radius: 40px;
-                font-size: 0.75rem;
+                font-size: 0.7rem;
+                max-width: calc(100vw - 16px);
             }
             .map-header .room-code-badge {
                 padding: 4px 10px;
-                font-size: 0.7rem;
+                font-size: 0.68rem;
                 letter-spacing: 1.5px;
             }
             .map-header .header-btn {
-                padding: 6px 12px;
-                font-size: 0.7rem;
+                padding: 6px 10px;
+                font-size: 0.65rem;
             }
             .modal-card {
                 padding: 20px 16px;
@@ -704,7 +716,7 @@
             }
             .btn {
                 padding: 13px 22px;
-                font-size: 0.9rem;
+                font-size: 0.88rem;
             }
             #lobby-screen .title {
                 font-size: 1.7rem;
@@ -714,26 +726,35 @@
             }
             .leaderboard-panel {
                 top: 90px;
-                right: 8px;
-                min-width: 180px;
-                max-width: 220px;
-                font-size: 0.75rem;
-                padding: 10px 12px;
+                right: 6px;
+                min-width: 165px;
+                max-width: 210px;
+                font-size: 0.72rem;
+                padding: 10px 10px;
+                max-height: 40vh;
             }
             .gps-warning-bar {
-                top: 65px;
+                top: 70px;
                 font-size: 0.7rem;
                 padding: 6px 12px;
             }
             .fab-view-all {
                 bottom: 20px;
-                right: 16px;
+                right: 12px;
                 width: 44px;
                 height: 44px;
             }
             .fab-view-all svg {
                 width: 20px;
                 height: 20px;
+            }
+            .eye-icon {
+                width: 24px;
+                height: 24px;
+            }
+            .eye-icon svg {
+                width: 14px;
+                height: 14px;
             }
         }
     </style>
@@ -953,6 +974,7 @@
         let markersMap = new Map();
         let isLeaving = false;
         let trackedPlayer = null;
+        let isFirstLoad = true; // CRITICAL: only fitBounds once on initial load
 
         // ─── LEAFLET MAP INIT ─────────────────────────
         const map = L.map('map', {
@@ -975,7 +997,7 @@
             toast.className = `toast ${type}`;
             toast.textContent = message;
             toastContainer.appendChild(toast);
-            setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3300);
+            setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3500);
         }
 
         // ─── GPS WARNING CONTROLS ──────────────────────
@@ -1020,6 +1042,7 @@
             leaderboardPanel.classList.remove('visible');
             hideGpsWarning();
             trackedPlayer = null;
+            isFirstLoad = true;
             invalidateMapSize();
         }
 
@@ -1078,7 +1101,7 @@
             return `${(meters / 1000).toFixed(1)} km`;
         }
 
-        // ─── UPSERT MARKER (without auto‑center) ──────
+        // ─── UPSERT MARKER (no auto‑center unless tracked) ──
         function upsertMarker(playerKey, displayName, lat, lng, color, isLeaderMarker, isSelf) {
             if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return;
             const initial = (displayName || playerKey).charAt(0).toUpperCase();
@@ -1124,7 +1147,8 @@
             markersMap.clear();
         }
 
-        function fitMapToMarkers() {
+        // ─── FIT ALL MARKERS (called only when needed) ──
+        function fitAllMarkersOnMap() {
             if (markersMap.size === 0) return;
             const bounds = [];
             for (const marker of markersMap.values()) bounds.push(marker.getLatLng());
@@ -1135,14 +1159,11 @@
             }
         }
 
-        // ── SVG CROSSHAIR ICON FOR TARGET ──────────────
-        const crosshairSVG = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="9"/>
-                <line x1="12" y1="1" x2="12" y2="6"/>
-                <line x1="12" y1="18" x2="12" y2="23"/>
-                <line x1="1" y1="12" x2="6" y2="12"/>
-                <line x1="18" y1="12" x2="23" y2="12"/>
+        // ── SVG EYE ICON ───────────────────────────────
+        const eyeSVG = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
             </svg>`;
 
         // ─── UPDATE DISTANCES & LEADERBOARD ────────────
@@ -1176,7 +1197,7 @@
             let html = '';
             for (const item of distances) {
                 const isTracked = (trackedPlayer === item.playerKey);
-                const targetClass = isTracked ? 'active' : '';
+                const eyeClass = isTracked ? 'active' : '';
                 html += `
                     <div class="leaderboard-item ${item.isSelf ? 'self' : ''}">
                         <span class="rider-name">
@@ -1184,8 +1205,8 @@
                             ${item.displayName}${item.isSelf ? ' (You)' : ''}
                         </span>
                         <span class="distance ${item.distanceText === 'Nearby' ? 'nearby' : ''}">${item.distanceText}</span>
-                        <span class="target-icon ${targetClass}" data-player="${item.playerKey}" title="Track this rider">
-                            ${crosshairSVG}
+                        <span class="eye-icon ${eyeClass}" data-player="${item.playerKey}" title="Focus on this rider">
+                            ${eyeSVG}
                         </span>
                     </div>`;
             }
@@ -1252,6 +1273,12 @@
 
                 mapPlayerCount.textContent = activePlayerKeys.size;
 
+                // STRICT ONE‑TIME INITIAL FIT
+                if (isFirstLoad && markersMap.size > 0) {
+                    fitAllMarkersOnMap();
+                    isFirstLoad = false;
+                }
+
                 if (currentPlayerKey && playersData[currentPlayerKey]) {
                     const myData = playersData[currentPlayerKey];
                     if (myData.role === 'leader') {
@@ -1294,6 +1321,7 @@
             leaderboardPanel.classList.remove('visible');
             hideGpsWarning();
             trackedPlayer = null;
+            isFirstLoad = true;
             showLobby();
             hideAllModals();
             isLeaving = false;
@@ -1446,6 +1474,7 @@
             leaderboardPanel.classList.remove('visible');
             hideGpsWarning();
             trackedPlayer = null;
+            isFirstLoad = true;
             onDisconnectRef = null;
             isLeaving = false;
             showLobby();
@@ -1475,6 +1504,7 @@
             leaderboardPanel.classList.remove('visible');
             hideGpsWarning();
             trackedPlayer = null;
+            isFirstLoad = true;
             onDisconnectRef = null;
             isLeaving = false;
             showLobby();
@@ -1515,6 +1545,7 @@
             currentDisplayName = displayName;
             currentColor = LEADER_COLOR;
             isLeader = true;
+            isFirstLoad = true; // reset for fresh room entry
 
             const posStatus = await saveInitialPosition(roomId, playerKey, displayName, LEADER_COLOR, 'leader');
 
@@ -1525,6 +1556,7 @@
                 currentDisplayName = null;
                 currentColor = null;
                 isLeader = false;
+                isFirstLoad = true;
                 submitCreate.disabled = false;
                 submitCreate.textContent = 'Create Squad';
                 createGpsLoading.classList.remove('visible');
@@ -1538,7 +1570,6 @@
             showMapScreen();
             startWatchingPosition(roomId, playerKey, displayName, LEADER_COLOR, 'leader');
             setupRoomListener(roomId);
-            trackedPlayer = playerKey;
 
             submitCreate.disabled = false;
             submitCreate.textContent = 'Create Squad';
@@ -1589,6 +1620,7 @@
             currentDisplayName = displayName;
             currentColor = assignedColor;
             isLeader = false;
+            isFirstLoad = true; // reset for fresh room entry
 
             const posStatus = await saveInitialPosition(roomId, playerKey, displayName, assignedColor, 'member');
             if (posStatus === 'permission_denied') {
@@ -1596,6 +1628,7 @@
                 currentPlayerKey = null;
                 currentDisplayName = null;
                 currentColor = null;
+                isFirstLoad = true;
                 submitJoin.disabled = false;
                 submitJoin.textContent = 'Join Squad';
                 joinGpsLoading.classList.remove('visible');
@@ -1609,18 +1642,17 @@
             showMapScreen();
             startWatchingPosition(roomId, playerKey, displayName, assignedColor, 'member');
             setupRoomListener(roomId);
-            trackedPlayer = playerKey;
 
             submitJoin.disabled = false;
             submitJoin.textContent = 'Join Squad';
             joinGpsLoading.classList.remove('visible');
         }
 
-        // ─── TARGET ICON CLICK HANDLER ─────────────────
+        // ─── EYE ICON CLICK HANDLER ────────────────────
         leaderboardList.addEventListener('click', (e) => {
-            const targetIcon = e.target.closest('.target-icon');
-            if (!targetIcon) return;
-            const playerKey = targetIcon.getAttribute('data-player');
+            const eyeIcon = e.target.closest('.eye-icon');
+            if (!eyeIcon) return;
+            const playerKey = eyeIcon.getAttribute('data-player');
             if (playerKey) {
                 if (trackedPlayer === playerKey) {
                     trackedPlayer = null;
@@ -1639,16 +1671,16 @@
         // ─── MAP DRAG DISABLES TRACKING ────────────────
         map.on('dragstart', () => {
             trackedPlayer = null;
-            const activeTargets = leaderboardList.querySelectorAll('.target-icon.active');
-            activeTargets.forEach(icon => icon.classList.remove('active'));
+            const activeEyes = leaderboardList.querySelectorAll('.eye-icon.active');
+            activeEyes.forEach(icon => icon.classList.remove('active'));
         });
 
         // ─── VIEW ALL BUTTON ───────────────────────────
         viewAllBtn.addEventListener('click', () => {
             trackedPlayer = null;
-            fitMapToMarkers();
-            const activeTargets = leaderboardList.querySelectorAll('.target-icon.active');
-            activeTargets.forEach(icon => icon.classList.remove('active'));
+            fitAllMarkersOnMap();
+            const activeEyes = leaderboardList.querySelectorAll('.eye-icon.active');
+            activeEyes.forEach(icon => icon.classList.remove('active'));
         });
 
         // ─── OTHER EVENT LISTENERS ────────────────────
@@ -1727,7 +1759,7 @@
         hideGpsWarning();
         mapRoomCode.textContent = '------';
         mapPlayerCount.textContent = '0';
-        console.log('🏍️ Riding Squad ready – professional SVG icons & strict GPS active.');
+        console.log('🏍️ Riding Squad ready – one‑time auto‑fit, eye icon, translucent panels active.');
     </script>
 </body>
 </html>
