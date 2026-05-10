@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riding Squad · Strict GPS & Smart Camera</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <style>
+        :root {
+            --bg: #06060d;
+            --surface: #111118;
+            --surface-2: #1a1a24;
+            --surface-3: #222230;
+            --accent: #f59e0b;
+            --accent-glow: rgba(245, 158, 11, 0.5);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.5);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.5);
+            --warning: #f97316;
+            --green: #10b981;
+            --text: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2a2a38;
+            --radius: 14px;
+            --radius-sm: 10px;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ── LOBBY SCREEN ─────────────────────────── */
+        #lobby-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 28px;
+            z-index: 10;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        #lobby-screen .lobby-icon {
+            font-size: 5rem;
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 30px var(--accent-glow));
+            line-height: 1;
+        }
+        @keyframes float {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-14px);
+            }
+        }
+        #lobby-screen .title {
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 900;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.6));
+            line-height: 1.1;
+        }
+        #lobby-screen .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-top: -8px;
+        }
+        .lobby-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 320px;
+            margin-top: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 24px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all var(--transition);
+            white-space: nowrap;
+            font-family: inherit;
+            letter-spacing: 0.3px;
+            outline: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn-create {
+            background: var(--accent);
+            color: #0a0a0f;
+            border-color: var(--accent);
+            box-shadow: 0 0 30px var(--accent-glow), 0 4px 20px rgba(0, 0, 0, 0.5);
+            animation: pulse-glow 2.5s ease-in-out infinite;
+        }
+        .btn-create:hover {
+            box-shadow: 0 0 50px rgba(245, 158, 11, 0.8), 0 6px 28px rgba(0, 0, 0, 0.6);
+            transform: translateY(-2px);
+        }
+        @keyframes pulse-glow {
+            0%,
+            100% {
+                box-shadow: 0 0 30px var(--accent-glow), 0 4px 20px rgba(0, 0, 0, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 50px rgba(245, 158, 11, 0.75), 0 6px 24px rgba(0, 0, 0, 0.55);
+            }
+        }
+        .btn-join {
+            background: transparent;
+            color: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow), 0 4px 16px rgba(0, 0, 0, 0.4);
+            animation: pulse-glow-blue 3s ease-in-out infinite;
+        }
+        .btn-join:hover {
+            background: rgba(59, 130, 246, 0.08);
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.7), 0 6px 24px rgba(0, 0, 0, 0.5);
+            transform: translateY(-2px);
+        }
+        @keyframes pulse-glow-blue {
+            0%,
+            100% {
+                box-shadow: 0 0 20px var(--primary-glow), 0 4px 16px rgba(0, 0, 0, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 35px rgba(59, 130, 246, 0.65), 0 6px 20px rgba(0, 0, 0, 0.45);
+            }
+        }
+
+        /* ── MODAL OVERLAY ────────────────────────── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+            animation: slideUp 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .modal-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: center;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+        .modal-card .modal-icon {
+            text-align: center;
+            font-size: 2.5rem;
+        }
+        .input-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .input-field label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-secondary);
+        }
+        .input-field input {
+            background: var(--surface-2);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            color: var(--text);
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: all var(--transition);
+            letter-spacing: 0.5px;
+        }
+        .input-field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+            background: var(--surface-3);
+        }
+        .input-field input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .modal-actions .btn {
+            flex: 1;
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            border-radius: 50px;
+        }
+        .btn-submit {
+            background: var(--accent);
+            color: #0a0a0f;
+            border-color: var(--accent);
+        }
+        .btn-submit:hover {
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+        .btn-cancel {
+            background: transparent;
+            color: var(--text-secondary);
+            border-color: var(--border);
+        }
+        .btn-cancel:hover {
+            border-color: var(--text-muted);
+            color: var(--text);
+        }
+        .btn-danger-modal {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
+        .btn-danger-modal:hover {
+            box-shadow: 0 0 30px var(--danger-glow);
+        }
+        .btn-submit:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        /* ── GPS LOADING INDICATOR ────────────────── */
+        .gps-loading {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            padding: 8px;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.85rem;
+            animation: pulse-text 1.5s ease-in-out infinite;
+        }
+        .gps-loading.visible {
+            display: flex;
+        }
+        .gps-spinner {
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(245, 158, 11, 0.3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        @keyframes pulse-text {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* ── MAP SCREEN ───────────────────────────── */
+        #map-screen {
+            position: fixed;
+            inset: 0;
+            display: none;
+            z-index: 5;
+        }
+        #map-screen.active {
+            display: block;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .map-header {
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            background: rgba(17, 17, 24, 0.94);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            flex-wrap: wrap;
+            justify-content: center;
+            transition: all var(--transition);
+        }
+        .map-header .room-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+        .map-header .room-code-badge {
+            background: var(--surface-3);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-size: 0.85rem;
+            animation: subtle-glow 3s ease-in-out infinite;
+        }
+        @keyframes subtle-glow {
+            0%,
+            100% {
+                box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 18px rgba(245, 158, 11, 0.55);
+            }
+        }
+        .map-header .player-count {
+            background: var(--surface-3);
+            border-radius: 50px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .map-header .player-count .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: blink-dot 1.5s ease-in-out infinite;
+        }
+        @keyframes blink-dot {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.2;
+            }
+        }
+        .map-header .header-btn {
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all var(--transition);
+            font-family: inherit;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            background: transparent;
+        }
+        .btn-leave {
+            color: #f59e0b;
+            border-color: #f59e0b;
+        }
+        .btn-leave:hover {
+            background: rgba(245, 158, 11, 0.1);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        }
+        .btn-close-room {
+            color: #fff;
+            background: var(--danger) !important;
+            border-color: var(--danger);
+        }
+        .btn-close-room:hover {
+            box-shadow: 0 0 28px var(--danger-glow);
+        }
+
+        /* ── GPS WARNING BAR ──────────────────────── */
+        .gps-warning-bar {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 998;
+            background: rgba(249, 115, 22, 0.9);
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .gps-warning-bar.visible {
+            display: flex;
+        }
+        .gps-warning-bar i {
+            color: #fff;
+        }
+
+        /* ── DISTANCE LEADERBOARD PANEL ───────────── */
+        .leaderboard-panel {
+            position: absolute;
+            top: 100px;
+            right: 16px;
+            z-index: 997;
+            background: rgba(17, 17, 24, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            min-width: 220px;
+            max-width: 280px;
+            max-height: 50vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+            font-size: 0.82rem;
+            display: none;
+            color: var(--text);
+        }
+        .leaderboard-panel.visible {
+            display: block;
+        }
+        .leaderboard-panel h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--accent);
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .leaderboard-item .rider-name {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            flex: 1;
+        }
+        .leaderboard-item .rider-name .color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .leaderboard-item .distance {
+            font-weight: 700;
+            color: var(--green);
+            font-variant-numeric: tabular-nums;
+            margin-right: 6px;
+        }
+        .leaderboard-item .distance.nearby {
+            color: #10b981;
+        }
+        .leaderboard-item .target-icon {
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 1rem;
+            transition: color var(--transition);
+            margin-left: 4px;
+        }
+        .leaderboard-item .target-icon:hover {
+            color: var(--accent);
+        }
+        .leaderboard-item .target-icon.active {
+            color: var(--accent);
+            filter: drop-shadow(0 0 6px var(--accent));
+        }
+        .leaderboard-item.self {
+            background: rgba(245, 158, 11, 0.08);
+            border-radius: 6px;
+        }
+        .leaderboard-item.self .distance {
+            color: var(--accent);
+        }
+
+        /* ── VIEW ALL BUTTON ─────────────────────── */
+        .view-all-btn {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            z-index: 999;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            padding: 10px 18px;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        .view-all-btn:hover {
+            background: var(--surface-2);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        }
+
+        /* ── CUSTOM MARKER (injected via JS) ──────── */
+        .custom-marker {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        /* ── TOAST ────────────────────────────────── */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            padding: 11px 18px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            animation: toastIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                toastOut 0.3s 3s ease forwards;
+            pointer-events: auto;
+            max-width: 350px;
+            text-align: center;
+        }
+        .toast.error {
+            background: #ef4444;
+        }
+        .toast.success {
+            background: #10b981;
+        }
+        .toast.info {
+            background: #3b82f6;
+        }
+        .toast.warning {
+            background: #f59e0b;
+            color: #0a0a0f;
+        }
+        @keyframes toastIn {
+            from {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes toastOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+        }
+
+        /* ── RESPONSIVE ───────────────────────────── */
+        @media (max-width: 600px) {
+            .map-header {
+                top: 8px;
+                padding: 8px 12px;
+                gap: 8px;
+                border-radius: 40px;
+                font-size: 0.75rem;
+            }
+            .map-header .room-code-badge {
+                padding: 4px 10px;
+                font-size: 0.7rem;
+                letter-spacing: 1.5px;
+            }
+            .map-header .header-btn {
+                padding: 6px 12px;
+                font-size: 0.7rem;
+            }
+            .modal-card {
+                padding: 20px 16px;
+                gap: 12px;
+            }
+            .btn {
+                padding: 13px 22px;
+                font-size: 0.9rem;
+            }
+            #lobby-screen .title {
+                font-size: 1.7rem;
+            }
+            #lobby-screen .lobby-icon {
+                font-size: 3.5rem;
+            }
+            .leaderboard-panel {
+                top: 90px;
+                right: 8px;
+                min-width: 180px;
+                max-width: 220px;
+                font-size: 0.75rem;
+                padding: 10px 12px;
+            }
+            .gps-warning-bar {
+                top: 65px;
+                font-size: 0.7rem;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══════════ LOBBY SCREEN ═══════════════════ -->
+    <div id="lobby-screen">
+        <div class="lobby-icon">🏍️</div>
+        <h1 class="title">RIDING SQUAD</h1>
+        <p class="subtitle">High-Accuracy GPS · Smart Camera</p>
+        <div class="lobby-buttons">
+            <button class="btn btn-create" id="btnCreateRoom">
+                <i class="fa-solid fa-plus"></i> Create Room
+            </button>
+            <button class="btn btn-join" id="btnJoinRoom">
+                <i class="fa-solid fa-right-to-bracket"></i> Join Room
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════ CREATE ROOM MODAL ══════════════ -->
+    <div class="modal-overlay" id="createModal">
+        <div class="modal-card">
+            <div class="modal-icon">🛡️</div>
+            <h3>Create Your Squad</h3>
+            <div class="input-field">
+                <label>Your Name</label>
+                <input type="text" id="createName" placeholder="Enter your rider name" maxlength="30" autocomplete="off" />
+            </div>
+            <div class="input-field">
+                <label>8-Digit Room Password</label>
+                <input type="password" id="createPassword" placeholder="Create an 8-digit numeric password"
+                maxlength="8" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
+            </div>
+            <div class="gps-loading" id="createGpsLoading">
+                <span class="gps-spinner"></span> Acquiring high-accuracy GPS...
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelCreate">Cancel</button>
+                <button class="btn btn-submit" id="submitCreate">Create Squad</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ JOIN ROOM MODAL ════════════════ -->
+    <div class="modal-overlay" id="joinModal">
+        <div class="modal-card">
+            <div class="modal-icon">🔑</div>
+            <h3>Join Existing Squad</h3>
+            <div class="input-field">
+                <label>Your Name</label>
+                <input type="text" id="joinName" placeholder="Enter your rider name" maxlength="30" autocomplete="off" />
+            </div>
+            <div class="input-field">
+                <label>Room ID</label>
+                <input type="text" id="joinRoomId" placeholder="Enter the 6-character Room ID"
+                maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:2px;" />
+            </div>
+            <div class="input-field">
+                <label>8-Digit Room Password</label>
+                <input type="password" id="joinPassword" placeholder="Enter the 8-digit password"
+                maxlength="8" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
+            </div>
+            <div class="gps-loading" id="joinGpsLoading">
+                <span class="gps-spinner"></span> Acquiring high-accuracy GPS...
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelJoin">Cancel</button>
+                <button class="btn btn-submit" id="submitJoin">Join Squad</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ CONFIRM CLOSE ROOM MODAL ═══════ -->
+    <div class="modal-overlay" id="confirmCloseModal">
+        <div class="modal-card">
+            <div class="modal-icon">⚠️</div>
+            <h3>Close This Room?</h3>
+            <p style="text-align:center;color:var(--text-secondary);font-size:0.9rem;">
+                This will permanently delete the room and kick out <strong>all members</strong>.
+                This action cannot be undone.
+            </p>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelClose">Go Back</button>
+                <button class="btn btn-danger-modal" id="confirmClose">Yes, Delete Room</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ MAP SCREEN ════════════════════ -->
+    <div id="map-screen">
+        <div id="map"></div>
+        <div class="map-header" id="mapHeader">
+            <div class="room-info">
+                <span style="color:var(--text-secondary);">Room:</span>
+                <span class="room-code-badge" id="mapRoomCode">------</span>
+            </div>
+            <div class="player-count">
+                <span class="dot"></span>
+                <span>Riders: <strong id="mapPlayerCount">0</strong></span>
+            </div>
+            <button class="header-btn btn-close-room" id="btnCloseRoom" style="display:none;">
+                <i class="fa-solid fa-skull"></i> Close Room
+            </button>
+            <button class="header-btn btn-leave" id="btnLeaveRoom" style="display:none;">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Leave
+            </button>
+        </div>
+        <!-- GPS WARNING BAR -->
+        <div class="gps-warning-bar" id="gpsWarningBar">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span id="gpsWarningText">Weak GPS Signal. Please go outside under the open sky.</span>
+        </div>
+        <!-- Distance Leaderboard Panel -->
+        <div class="leaderboard-panel" id="leaderboardPanel">
+            <h4><i class="fa-solid fa-ruler"></i> Rider Distances</h4>
+            <div id="leaderboardList"></div>
+        </div>
+        <!-- VIEW ALL BUTTON -->
+        <button class="view-all-btn" id="viewAllBtn">
+            <i class="fa-solid fa-globe"></i> View All
+        </button>
+    </div>
+
+    <!-- ═══════════ TOAST CONTAINER ═══════════════ -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+    <!-- Firebase Modular SDK v10 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+        import {
+            getDatabase,
+            ref,
+            set,
+            get,
+            onValue,
+            remove,
+            update,
+            onDisconnect
+        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA4_B45u4OcMFb356vtrtfhN2wg9ddP1po",
+            authDomain: "ride-to-me.firebaseapp.com",
+            databaseURL: "https://ride-to-me-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ride-to-me",
+            storageBucket: "ride-to-me.firebasestorage.app",
+            messagingSenderId: "296562457258",
+            appId: "1:296562457258:web:3b46f28b11daccf3bfaed3",
+            measurementId: "G-E2XZ763CV0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const analytics = getAnalytics(app);
+        console.log('✅ Firebase initialized');
+
+        // ─── DOM REFERENCES ────────────────────────────
+        const lobbyScreen = document.getElementById('lobby-screen');
+        const btnCreateRoom = document.getElementById('btnCreateRoom');
+        const btnJoinRoom = document.getElementById('btnJoinRoom');
+        const createModal = document.getElementById('createModal');
+        const createNameInput = document.getElementById('createName');
+        const createPasswordInput = document.getElementById('createPassword');
+        const createGpsLoading = document.getElementById('createGpsLoading');
+        const submitCreate = document.getElementById('submitCreate');
+        const cancelCreate = document.getElementById('cancelCreate');
+        const joinModal = document.getElementById('joinModal');
+        const joinNameInput = document.getElementById('joinName');
+        const joinRoomIdInput = document.getElementById('joinRoomId');
+        const joinPasswordInput = document.getElementById('joinPassword');
+        const joinGpsLoading = document.getElementById('joinGpsLoading');
+        const submitJoin = document.getElementById('submitJoin');
+        const cancelJoin = document.getElementById('cancelJoin');
+        const confirmCloseModal = document.getElementById('confirmCloseModal');
+        const cancelClose = document.getElementById('cancelClose');
+        const confirmClose = document.getElementById('confirmClose');
+        const mapScreen = document.getElementById('map-screen');
+        const mapRoomCode = document.getElementById('mapRoomCode');
+        const mapPlayerCount = document.getElementById('mapPlayerCount');
+        const btnCloseRoom = document.getElementById('btnCloseRoom');
+        const btnLeaveRoom = document.getElementById('btnLeaveRoom');
+        const gpsWarningBar = document.getElementById('gpsWarningBar');
+        const gpsWarningText = document.getElementById('gpsWarningText');
+        const leaderboardPanel = document.getElementById('leaderboardPanel');
+        const leaderboardList = document.getElementById('leaderboardList');
+        const viewAllBtn = document.getElementById('viewAllBtn');
+        const toastContainer = document.getElementById('toastContainer');
+
+        // ─── CONSTANTS ──────────────────────────────────
+        const LEADER_COLOR = '#ef4444';
+        const MEMBER_COLORS = [
+            '#3b82f6', '#10b981', '#f59e0b', '#f97316', '#8b5cf6',
+            '#ec4899', '#14b8a6', '#6366f1', '#84cc16', '#06b6d4'
+        ];
+
+        // ─── APPLICATION STATE ─────────────────────────
+        let currentRoomId = null;
+        let currentPlayerKey = null;
+        let currentDisplayName = null;
+        let currentColor = null;
+        let isLeader = false;
+        let geoWatchId = null;
+        let roomUnsubscribe = null;
+        let onDisconnectRef = null;
+        let markersMap = new Map(); // playerKey -> L.marker
+        let isLeaving = false;
+        let trackedPlayer = null; // key of currently tracked player for camera following
+
+        // ─── LEAFLET MAP INIT ─────────────────────────
+        const map = L.map('map', {
+            center: [20.5937, 78.9629],
+            zoom: 5,
+            zoomControl: true,
+            attributionControl: true,
+        });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19,
+        }).addTo(map);
+
+        function invalidateMapSize() { setTimeout(() => map.invalidateSize(), 250); }
+        window.addEventListener('resize', () => map.invalidateSize());
+
+        // ─── TOAST ─────────────────────────────────────
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3300);
+        }
+
+        // ─── GPS WARNING CONTROLS ──────────────────────
+        function showGpsWarning(message) {
+            gpsWarningText.textContent = message;
+            gpsWarningBar.classList.add('visible');
+        }
+
+        function hideGpsWarning() {
+            gpsWarningBar.classList.remove('visible');
+        }
+
+        // ─── SANITIZE NAME ────────────────────────────
+        function sanitizeName(name) {
+            return name.trim().replace(/[\.\$\#\[\]\/]/g, '_').replace(/\s+/g, '_');
+        }
+
+        // ─── GENERATE ROOM ID ──────────────────────────
+        function generateRoomId() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let result = '';
+            for (let i = 0; i < 6; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+            return result;
+        }
+
+        // ─── GET CURRENT POSITION (PROMISE) ────────────
+        function getCurrentPositionPromise() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) return reject({ code: -1, message: 'Geolocation not supported' });
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0,
+                });
+            });
+        }
+
+        // ─── SCREEN MANAGEMENT ─────────────────────────
+        function showLobby() {
+            mapScreen.classList.remove('active');
+            lobbyScreen.style.display = 'flex';
+            leaderboardPanel.classList.remove('visible');
+            hideGpsWarning();
+            trackedPlayer = null;
+            invalidateMapSize();
+        }
+
+        function showMapScreen() {
+            lobbyScreen.style.display = 'none';
+            mapScreen.classList.add('active');
+            leaderboardPanel.classList.add('visible');
+            invalidateMapSize();
+        }
+
+        function hideAllModals() {
+            createModal.classList.remove('active');
+            joinModal.classList.remove('active');
+            confirmCloseModal.classList.remove('active');
+            createGpsLoading.classList.remove('visible');
+            joinGpsLoading.classList.remove('visible');
+        }
+
+        // ─── BUILD CUSTOM MARKER HTML ──────────────────
+        function buildMarkerHTML(color, initial, isLeaderMarker, isSelf) {
+            const size = isLeaderMarker ? 38 : 32;
+            const borderWidth = isSelf ? 4 : 3;
+            const borderColor = isSelf ? '#ffffff' : 'rgba(255,255,255,0.85)';
+            const shadowBlur = isSelf ? 18 : 10;
+            const pulseAnim = isSelf ? 'markerPulse 2s ease-in-out infinite' : 'none';
+            const crownHTML = isLeaderMarker ?
+                '<span style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:16px;filter:drop-shadow(0 0 4px rgba(0,0,0,0.6));">👑</span>' :
+                '';
+            return `
+            <div style="
+              width:${size}px; height:${size}px; border-radius:50%;
+              background:${color}; border:${borderWidth}px solid ${borderColor};
+              box-shadow: 0 0 ${shadowBlur}px ${color}, 0 3px 12px rgba(0,0,0,0.55);
+              animation: ${pulseAnim}; position:relative;
+              display:flex; align-items:center; justify-content:center;
+              font-weight:900; font-size:${size * 0.4}px; color:#fff;
+              text-shadow: 0 1px 2px rgba(0,0,0,0.5); letter-spacing:0; line-height:1;
+            ">
+              ${crownHTML}${initial}
+            </div>`;
+        }
+
+        const pulseStyleEl = document.createElement('style');
+        pulseStyleEl.textContent = `
+          @keyframes markerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.16); }
+          }
+        `;
+        document.head.appendChild(pulseStyleEl);
+
+        // ─── FORMAT DISTANCE ──────────────────────────
+        function formatDistance(meters) {
+            if (meters < 5) return 'Nearby';
+            if (meters < 1000) return `${Math.round(meters)}m`;
+            return `${(meters / 1000).toFixed(1)} km`;
+        }
+
+        // ─── UPSERT MARKER (without auto‑center) ──────
+        function upsertMarker(playerKey, displayName, lat, lng, color, isLeaderMarker, isSelf) {
+            if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return;
+            const initial = (displayName || playerKey).charAt(0).toUpperCase();
+            const size = isLeaderMarker ? 38 : 32;
+
+            if (markersMap.has(playerKey)) {
+                const marker = markersMap.get(playerKey);
+                marker.setLatLng([lat, lng]);
+                marker.setIcon(
+                    L.divIcon({
+                        html: buildMarkerHTML(color, initial, isLeaderMarker, isSelf),
+                        className: 'custom-marker',
+                        iconSize: [size + 6, size + 6],
+                        iconAnchor: [(size + 6) / 2, (size + 6) / 2],
+                        tooltipAnchor: [0, -(size + 6) / 2 - 6],
+                    })
+                );
+                // Camera follow if this is the tracked player
+                if (trackedPlayer === playerKey && !isLeaving) {
+                    map.setView([lat, lng], map.getZoom(), { animate: true });
+                }
+            } else {
+                const icon = L.divIcon({
+                    html: buildMarkerHTML(color, initial, isLeaderMarker, isSelf),
+                    className: 'custom-marker',
+                    iconSize: [size + 6, size + 6],
+                    iconAnchor: [(size + 6) / 2, (size + 6) / 2],
+                    tooltipAnchor: [0, -(size + 6) / 2 - 6],
+                });
+                const marker = L.marker([lat, lng], { icon }).addTo(map);
+                markersMap.set(playerKey, marker);
+            }
+        }
+
+        function removeMarker(playerKey) {
+            if (markersMap.has(playerKey)) {
+                map.removeLayer(markersMap.get(playerKey));
+                markersMap.delete(playerKey);
+            }
+        }
+
+        function clearAllMarkers() {
+            for (const [key, marker] of markersMap) map.removeLayer(marker);
+            markersMap.clear();
+        }
+
+        function fitMapToMarkers() {
+            if (markersMap.size === 0) return;
+            const bounds = [];
+            for (const marker of markersMap.values()) bounds.push(marker.getLatLng());
+            if (bounds.length === 1) {
+                map.setView(bounds[0], 16, { animate: true });
+            } else {
+                map.fitBounds(L.latLngBounds(bounds), { padding: [50, 50], maxZoom: 16, animate: true });
+            }
+        }
+
+        // ─── UPDATE DISTANCES & LEADERBOARD ────────────
+        function updateDistancesAndLeaderboard(playersData, myLat, myLng) {
+            const distances = [];
+            if (myLat == null || myLng == null || isNaN(myLat) || isNaN(myLng)) {
+                leaderboardList.innerHTML =
+                    '<div style="text-align:center;color:var(--text-muted);">Waiting for your location...</div>';
+                return;
+            }
+            const myLatLng = L.latLng(myLat, myLng);
+
+            for (const [playerKey, playerData] of Object.entries(playersData)) {
+                if (!playerData || typeof playerData.lat !== 'number' || typeof playerData.lng !== 'number') continue;
+                const displayName = playerData.displayName || playerKey;
+                const color = playerData.color || '#ccc';
+                const isSelf = (playerKey === currentPlayerKey);
+                let distanceText = '';
+                if (!isSelf) {
+                    const otherLatLng = L.latLng(playerData.lat, playerData.lng);
+                    const dist = myLatLng.distanceTo(otherLatLng);
+                    distanceText = formatDistance(dist);
+                } else {
+                    distanceText = 'You';
+                }
+                distances.push({ playerKey, displayName, color, distanceText, isSelf });
+            }
+
+            distances.sort((a, b) => (a.isSelf ? -1 : b.isSelf ? 1 : 0));
+
+            let html = '';
+            for (const item of distances) {
+                const isTracked = (trackedPlayer === item.playerKey);
+                const targetClass = isTracked ? 'active' : '';
+                html += `
+                    <div class="leaderboard-item ${item.isSelf ? 'self' : ''}">
+                        <span class="rider-name">
+                            <span class="color-dot" style="background:${item.color};"></span>
+                            ${item.displayName}${item.isSelf ? ' (You)' : ''}
+                        </span>
+                        <span class="distance ${item.distanceText === 'Nearby' ? 'nearby' : ''}">${item.distanceText}</span>
+                        <span class="target-icon ${targetClass}" data-player="${item.playerKey}" title="Track this rider">
+                            🎯
+                        </span>
+                    </div>`;
+            }
+            leaderboardList.innerHTML = html;
+
+            // Update tooltips on map
+            for (const item of distances) {
+                const marker = markersMap.get(item.playerKey);
+                if (!marker) continue;
+                let tooltipText = item.displayName;
+                if (item.distanceText !== 'You') {
+                    tooltipText += ` - ${item.distanceText}`;
+                    if (item.distanceText === 'Nearby') tooltipText += ' 📍';
+                }
+                const isLeaderMarker = (playersData[item.playerKey]?.role === 'leader');
+                if (isLeaderMarker && item.playerKey !== currentPlayerKey) tooltipText = '👑 ' + tooltipText;
+                if (item.isSelf) tooltipText = `${item.displayName} (You)`;
+                marker.setTooltipContent(tooltipText);
+            }
+        }
+
+        // ─── SETUP ROOM LISTENER ───────────────────────
+        function setupRoomListener(roomId) {
+            if (roomUnsubscribe) {
+                roomUnsubscribe();
+                roomUnsubscribe = null;
+            }
+            const playersRef = ref(db, `rooms/${roomId}/players`);
+            roomUnsubscribe = onValue(playersRef, (snapshot) => {
+                if (isLeaving) return;
+                const playersData = snapshot.val();
+
+                if (playersData === null) {
+                    get(ref(db, `rooms/${roomId}`)).then((roomSnap) => {
+                        if (!roomSnap.exists() && !isLeaving) {
+                            showToast('The room has been closed by the leader.', 'warning');
+                            forceReturnToLobby();
+                        } else if (!isLeaving) {
+                            const staleKeys = new Set(markersMap.keys());
+                            staleKeys.forEach(k => removeMarker(k));
+                            mapPlayerCount.textContent = '0';
+                            leaderboardList.innerHTML = '';
+                        }
+                    }).catch(() => {});
+                    return;
+                }
+
+                const activePlayerKeys = new Set();
+                for (const [playerKey, playerData] of Object.entries(playersData)) {
+                    if (playerData && typeof playerData.lat === 'number' && typeof playerData.lng === 'number') {
+                        activePlayerKeys.add(playerKey);
+                        const displayName = playerData.displayName || playerKey;
+                        const color = playerData.color || MEMBER_COLORS[0];
+                        const isLeaderMarker = (playerData.role === 'leader');
+                        const isSelf = (playerKey === currentPlayerKey);
+                        // Upsert marker – no auto centering except if tracked
+                        upsertMarker(playerKey, displayName, playerData.lat, playerData.lng, color, isLeaderMarker,
+                            isSelf);
+                    }
+                }
+
+                const currentMarkerKeys = new Set(markersMap.keys());
+                for (const existingKey of currentMarkerKeys) {
+                    if (!activePlayerKeys.has(existingKey)) removeMarker(existingKey);
+                }
+
+                mapPlayerCount.textContent = activePlayerKeys.size;
+
+                if (currentPlayerKey && playersData[currentPlayerKey]) {
+                    const myData = playersData[currentPlayerKey];
+                    if (myData.role === 'leader') {
+                        isLeader = true;
+                        btnCloseRoom.style.display = 'inline-flex';
+                        btnLeaveRoom.style.display = 'none';
+                    } else {
+                        isLeader = false;
+                        btnCloseRoom.style.display = 'none';
+                        btnLeaveRoom.style.display = 'inline-flex';
+                    }
+                }
+
+                const myData = currentPlayerKey ? playersData[currentPlayerKey] : null;
+                const myLat = myData ? myData.lat : null;
+                const myLng = myData ? myData.lng : null;
+                updateDistancesAndLeaderboard(playersData, myLat, myLng);
+            }, (error) => {
+                console.error('❌ Room listener error:', error);
+                if (!isLeaving) showToast('Connection error. Check console.', 'error');
+            });
+        }
+
+        // ─── FORCE RETURN TO LOBBY ────────────────────
+        function forceReturnToLobby() {
+            stopTracking();
+            if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
+            if (onDisconnectRef) { onDisconnectRef.cancel().catch(() => {}); onDisconnectRef = null; }
+            clearAllMarkers();
+            currentRoomId = null;
+            currentPlayerKey = null;
+            currentDisplayName = null;
+            currentColor = null;
+            isLeader = false;
+            mapPlayerCount.textContent = '0';
+            mapRoomCode.textContent = '------';
+            btnCloseRoom.style.display = 'none';
+            btnLeaveRoom.style.display = 'none';
+            leaderboardList.innerHTML = '';
+            leaderboardPanel.classList.remove('visible');
+            hideGpsWarning();
+            trackedPlayer = null;
+            showLobby();
+            hideAllModals();
+            isLeaving = false;
+        }
+
+        function stopTracking() {
+            if (geoWatchId !== null) {
+                navigator.geolocation.clearWatch(geoWatchId);
+                geoWatchId = null;
+            }
+        }
+
+        // ─── START WATCHING POSITION (STRICT GPS) ──────
+        function startWatchingPosition(roomId, playerKey, displayName, color, role) {
+            if (!navigator.geolocation) {
+                showToast('Geolocation not supported by your browser.', 'error');
+                return false;
+            }
+            stopTracking();
+            const playerRef = ref(db, `rooms/${roomId}/players/${playerKey}`);
+            if (onDisconnectRef) { onDisconnectRef.cancel().catch(() => {}); }
+            onDisconnectRef = onDisconnect(playerRef);
+            onDisconnectRef.remove().catch(err => console.warn(err));
+
+            geoWatchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const { latitude, longitude, accuracy } = position.coords;
+                    if (latitude === 0 && longitude === 0) {
+                        showGpsWarning('Invalid location (Null Island). Please enable GPS outdoors.');
+                        return;
+                    }
+                    if (accuracy > 100) {
+                        showGpsWarning('Weak GPS Signal. Please go outside under the open sky for accurate tracking.');
+                        return;
+                    }
+                    hideGpsWarning();
+                    update(playerRef, {
+                        lat: latitude,
+                        lng: longitude,
+                        accuracy: accuracy,
+                        displayName: displayName,
+                        color: color,
+                        role: role,
+                        updatedAt: Date.now(),
+                    }).catch(err => console.error(err));
+
+                    // No automatic setView here – handled by upsertMarker only if tracked
+                },
+                (error) => {
+                    console.error('❌ Geolocation watch error:', error);
+                    let msg = '';
+                    switch (error.code) {
+                        case 1:
+                            msg = 'Location Permission Denied. You may not be visible on the map.';
+                            stopTracking();
+                            break;
+                        case 2:
+                        case 3:
+                            msg =
+                                'Original GPS signal not found. Please turn on your device GPS and move outdoors.';
+                            showGpsWarning(msg);
+                            break;
+                        default:
+                            msg = 'Unknown location error.';
+                    }
+                    showToast(msg, 'error');
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0,
+                }
+            );
+            return true;
+        }
+
+        // ─── SAVE INITIAL POSITION (STRICT CHECK) ──────
+        async function saveInitialPosition(roomId, playerKey, displayName, color, role) {
+            try {
+                const position = await getCurrentPositionPromise();
+                const { latitude, longitude, accuracy } = position.coords;
+                if (latitude === 0 && longitude === 0) {
+                    showToast('Invalid location (Null Island). Cannot join.', 'error');
+                    return false;
+                }
+                if (accuracy > 100) {
+                    showToast('Weak GPS Signal. Please go outside under the open sky for accurate tracking.',
+                        'warning');
+                    return false;
+                }
+                await set(ref(db, `rooms/${roomId}/players/${playerKey}`), {
+                    lat: latitude,
+                    lng: longitude,
+                    accuracy: accuracy,
+                    displayName: displayName,
+                    color: color,
+                    role: role,
+                    updatedAt: Date.now(),
+                });
+                return true;
+            } catch (err) {
+                if (err.code === 1) {
+                    showToast('Location Permission Denied. You cannot join.', 'error');
+                    return 'permission_denied';
+                } else if (err.code === 2 || err.code === 3) {
+                    showToast('Original GPS signal not found. Please turn on your device GPS and move outdoors.',
+                        'error');
+                    return false;
+                } else {
+                    showToast('Unexpected GPS error. Please try again.', 'error');
+                    return false;
+                }
+            }
+        }
+
+        function assignColorForPlayer(existingPlayers, isLeaderPlayer) {
+            if (isLeaderPlayer) return LEADER_COLOR;
+            const usedColors = new Set();
+            if (existingPlayers) {
+                for (const p of Object.values(existingPlayers)) {
+                    if (p && p.color) usedColors.add(p.color);
+                }
+            }
+            usedColors.add(LEADER_COLOR);
+            for (const color of MEMBER_COLORS) if (!usedColors.has(color)) return color;
+            return MEMBER_COLORS[Math.floor(Math.random() * MEMBER_COLORS.length)];
+        }
+
+        async function removePlayerFromRoom(roomId, playerKey) {
+            if (onDisconnectRef) { await onDisconnectRef.cancel().catch(() => {}); onDisconnectRef = null; }
+            await remove(ref(db, `rooms/${roomId}/players/${playerKey}`)).catch(err => console.error(err));
+        }
+
+        async function leaveRoom() {
+            if (isLeaving) return;
+            isLeaving = true;
+            const roomId = currentRoomId,
+                playerKey = currentPlayerKey;
+            stopTracking();
+            if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
+            if (roomId && playerKey) await removePlayerFromRoom(roomId, playerKey);
+            clearAllMarkers();
+            currentRoomId = null;
+            currentPlayerKey = null;
+            currentDisplayName = null;
+            currentColor = null;
+            isLeader = false;
+            mapPlayerCount.textContent = '0';
+            mapRoomCode.textContent = '------';
+            btnCloseRoom.style.display = 'none';
+            btnLeaveRoom.style.display = 'none';
+            leaderboardList.innerHTML = '';
+            leaderboardPanel.classList.remove('visible');
+            hideGpsWarning();
+            trackedPlayer = null;
+            onDisconnectRef = null;
+            isLeaving = false;
+            showLobby();
+            hideAllModals();
+            showToast('You have left the room.', 'info');
+        }
+
+        async function closeRoom() {
+            if (isLeaving) return;
+            isLeaving = true;
+            const roomId = currentRoomId;
+            stopTracking();
+            if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
+            if (onDisconnectRef) { await onDisconnectRef.cancel().catch(() => {}); onDisconnectRef = null; }
+            if (roomId) await remove(ref(db, `rooms/${roomId}`)).catch(err => console.error(err));
+            clearAllMarkers();
+            currentRoomId = null;
+            currentPlayerKey = null;
+            currentDisplayName = null;
+            currentColor = null;
+            isLeader = false;
+            mapPlayerCount.textContent = '0';
+            mapRoomCode.textContent = '------';
+            btnCloseRoom.style.display = 'none';
+            btnLeaveRoom.style.display = 'none';
+            leaderboardList.innerHTML = '';
+            leaderboardPanel.classList.remove('visible');
+            hideGpsWarning();
+            trackedPlayer = null;
+            onDisconnectRef = null;
+            isLeaving = false;
+            showLobby();
+            hideAllModals();
+            showToast('Room closed. All members have been removed.', 'success');
+        }
+
+        // ─── CREATE ROOM FLOW ─────────────────────────
+        async function createRoomFlow() {
+            const displayName = createNameInput.value.trim();
+            const password = createPasswordInput.value.trim();
+            if (!displayName) { showToast('Please enter your name.', 'error'); return; }
+            if (!/^\d{8}$/.test(password)) { showToast('Password must be exactly 8 digits.', 'error'); return; }
+            const playerKey = sanitizeName(displayName);
+            if (!playerKey) { showToast('Invalid name.', 'error'); return; }
+
+            submitCreate.disabled = true;
+            submitCreate.textContent = 'Creating...';
+            createGpsLoading.classList.add('visible');
+
+            let roomId, attempts = 0;
+            do {
+                roomId = generateRoomId();
+                attempts++;
+                if (!(await get(ref(db, `rooms/${roomId}`))).exists()) break;
+                if (attempts >= 15) {
+                    showToast('Could not generate unique Room ID.', 'error');
+                    submitCreate.disabled = false;
+                    submitCreate.textContent = 'Create Squad';
+                    createGpsLoading.classList.remove('visible');
+                    return;
+                }
+            } while (true);
+
+            await set(ref(db, `rooms/${roomId}`), { password, leader: displayName, createdAt: Date.now() });
+            currentRoomId = roomId;
+            currentPlayerKey = playerKey;
+            currentDisplayName = displayName;
+            currentColor = LEADER_COLOR;
+            isLeader = true;
+
+            const posStatus = await saveInitialPosition(roomId, playerKey, displayName, LEADER_COLOR, 'leader');
+
+            if (posStatus === 'permission_denied') {
+                await remove(ref(db, `rooms/${roomId}`)).catch(() => {});
+                currentRoomId = null;
+                currentPlayerKey = null;
+                currentDisplayName = null;
+                currentColor = null;
+                isLeader = false;
+                submitCreate.disabled = false;
+                submitCreate.textContent = 'Create Squad';
+                createGpsLoading.classList.remove('visible');
+                return;
+            }
+
+            mapRoomCode.textContent = roomId;
+            btnCloseRoom.style.display = 'inline-flex';
+            btnLeaveRoom.style.display = 'none';
+            hideAllModals();
+            showMapScreen();
+            startWatchingPosition(roomId, playerKey, displayName, LEADER_COLOR, 'leader');
+            setupRoomListener(roomId);
+            // Optionally track self on start
+            trackedPlayer = playerKey;
+
+            submitCreate.disabled = false;
+            submitCreate.textContent = 'Create Squad';
+            createGpsLoading.classList.remove('visible');
+        }
+
+        async function joinRoomFlow() {
+            const displayName = joinNameInput.value.trim();
+            const roomId = joinRoomIdInput.value.trim().toUpperCase();
+            const password = joinPasswordInput.value.trim();
+            if (!displayName) { showToast('Please enter your name.', 'error'); return; }
+            if (!roomId || roomId.length !== 6) { showToast('Room ID must be 6 characters.', 'error'); return; }
+            if (!/^\d{8}$/.test(password)) { showToast('Password must be 8 digits.', 'error'); return; }
+            const playerKey = sanitizeName(displayName);
+            if (!playerKey) { showToast('Invalid name.', 'error'); return; }
+
+            submitJoin.disabled = true;
+            submitJoin.textContent = 'Joining...';
+            joinGpsLoading.classList.add('visible');
+
+            const roomSnap = await get(ref(db, `rooms/${roomId}`));
+            if (!roomSnap.exists()) {
+                showToast('Room not found.', 'error');
+                submitJoin.disabled = false;
+                submitJoin.textContent = 'Join Squad';
+                joinGpsLoading.classList.remove('visible');
+                return;
+            }
+            const roomData = roomSnap.val();
+            if (roomData.password !== password) {
+                showToast('Incorrect password.', 'error');
+                submitJoin.disabled = false;
+                submitJoin.textContent = 'Join Squad';
+                joinGpsLoading.classList.remove('visible');
+                return;
+            }
+            const existingPlayers = roomData.players || {};
+            if (existingPlayers[playerKey]) {
+                showToast('Name already taken in this room.', 'error');
+                submitJoin.disabled = false;
+                submitJoin.textContent = 'Join Squad';
+                joinGpsLoading.classList.remove('visible');
+                return;
+            }
+            const assignedColor = assignColorForPlayer(existingPlayers, false);
+            currentRoomId = roomId;
+            currentPlayerKey = playerKey;
+            currentDisplayName = displayName;
+            currentColor = assignedColor;
+            isLeader = false;
+
+            const posStatus = await saveInitialPosition(roomId, playerKey, displayName, assignedColor, 'member');
+            if (posStatus === 'permission_denied') {
+                currentRoomId = null;
+                currentPlayerKey = null;
+                currentDisplayName = null;
+                currentColor = null;
+                submitJoin.disabled = false;
+                submitJoin.textContent = 'Join Squad';
+                joinGpsLoading.classList.remove('visible');
+                return;
+            }
+
+            mapRoomCode.textContent = roomId;
+            btnCloseRoom.style.display = 'none';
+            btnLeaveRoom.style.display = 'inline-flex';
+            hideAllModals();
+            showMapScreen();
+            startWatchingPosition(roomId, playerKey, displayName, assignedColor, 'member');
+            setupRoomListener(roomId);
+            trackedPlayer = playerKey; // start tracking self
+
+            submitJoin.disabled = false;
+            submitJoin.textContent = 'Join Squad';
+            joinGpsLoading.classList.remove('visible');
+        }
+
+        // ─── TARGET ICON CLICK HANDLER ─────────────────
+        leaderboardList.addEventListener('click', (e) => {
+            const targetIcon = e.target.closest('.target-icon');
+            if (!targetIcon) return;
+            const playerKey = targetIcon.getAttribute('data-player');
+            if (playerKey) {
+                if (trackedPlayer === playerKey) {
+                    trackedPlayer = null;
+                } else {
+                    trackedPlayer = playerKey;
+                }
+                // Force immediate recenter if there's a marker
+                const marker = markersMap.get(playerKey);
+                if (marker && trackedPlayer) {
+                    const latlng = marker.getLatLng();
+                    map.setView(latlng, map.getZoom(), { animate: true });
+                }
+                // Update UI
+                updateDistancesAndLeaderboard(
+                    currentRoomId ? (/* will be refreshed soon anyway */ {}) : {},
+                    null, null
+                );
+            }
+        });
+
+        // ─── MAP DRAG DISABLES TRACKING ────────────────
+        map.on('dragstart', () => {
+            trackedPlayer = null;
+            // refresh leaderboard to remove active target icon
+            if (currentRoomId && !isLeaving) {
+                // We don't have data here, but the next onValue will update UI
+                // For immediate feedback we can just clear the active class
+                const activeTargets = leaderboardList.querySelectorAll('.target-icon.active');
+                activeTargets.forEach(icon => icon.classList.remove('active'));
+            }
+        });
+
+        // ─── VIEW ALL BUTTON ───────────────────────────
+        viewAllBtn.addEventListener('click', () => {
+            trackedPlayer = null; // disable tracking when fitting all
+            fitMapToMarkers();
+            // update leaderboard to remove active target
+            const activeTargets = leaderboardList.querySelectorAll('.target-icon.active');
+            activeTargets.forEach(icon => icon.classList.remove('active'));
+        });
+
+        // ─── OTHER EVENT LISTENERS ────────────────────
+        btnCreateRoom.addEventListener('click', () => {
+            if (currentRoomId) { showToast('You are already in a room.', 'warning'); return; }
+            createNameInput.value = '';
+            createPasswordInput.value = '';
+            createGpsLoading.classList.remove('visible');
+            submitCreate.disabled = false;
+            submitCreate.textContent = 'Create Squad';
+            createModal.classList.add('active');
+            setTimeout(() => createNameInput.focus(), 150);
+        });
+        btnJoinRoom.addEventListener('click', () => {
+            if (currentRoomId) { showToast('You are already in a room.', 'warning'); return; }
+            joinNameInput.value = '';
+            joinRoomIdInput.value = '';
+            joinPasswordInput.value = '';
+            joinGpsLoading.classList.remove('visible');
+            submitJoin.disabled = false;
+            submitJoin.textContent = 'Join Squad';
+            joinModal.classList.add('active');
+            setTimeout(() => joinNameInput.focus(), 150);
+        });
+        cancelCreate.addEventListener('click', () => {
+            createModal.classList.remove('active');
+            createGpsLoading.classList.remove('visible');
+            submitCreate.disabled = false;
+            submitCreate.textContent = 'Create Squad';
+        });
+        cancelJoin.addEventListener('click', () => {
+            joinModal.classList.remove('active');
+            joinGpsLoading.classList.remove('visible');
+            submitJoin.disabled = false;
+            submitJoin.textContent = 'Join Squad';
+        });
+        cancelClose.addEventListener('click', () => confirmCloseModal.classList.remove('active'));
+        submitCreate.addEventListener('click', createRoomFlow);
+        submitJoin.addEventListener('click', joinRoomFlow);
+        btnLeaveRoom.addEventListener('click', leaveRoom);
+        btnCloseRoom.addEventListener('click', () => confirmCloseModal.classList.add('active'));
+        confirmClose.addEventListener('click', async () => { confirmCloseModal.classList.remove('active'); await closeRoom(); });
+
+        createPasswordInput.addEventListener('keydown', e => { if (e.key === 'Enter') createRoomFlow(); });
+        createNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') createPasswordInput.focus(); });
+        joinRoomIdInput.addEventListener('keydown', e => { if (e.key === 'Enter') joinPasswordInput.focus(); });
+        joinPasswordInput.addEventListener('keydown', e => { if (e.key === 'Enter') joinRoomFlow(); });
+        joinNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') joinRoomIdInput.focus(); });
+        [createPasswordInput, joinPasswordInput].forEach(inp => inp.addEventListener('input', () => inp.value = inp.value.replace(/[^0-9]/g, '').slice(0, 8)));
+        joinRoomIdInput.addEventListener('input', () => joinRoomIdInput.value = joinRoomIdInput.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase());
+        [createModal, joinModal, confirmCloseModal].forEach(modal => modal.addEventListener('click', e => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+                createGpsLoading.classList.remove('visible');
+                joinGpsLoading.classList.remove('visible');
+                submitCreate.disabled = false;
+                submitCreate.textContent = 'Create Squad';
+                submitJoin.disabled = false;
+                submitJoin.textContent = 'Join Squad';
+            }
+        }));
+
+        window.addEventListener('beforeunload', stopTracking);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && currentRoomId && currentPlayerKey && !isLeaving) {
+                if (!roomUnsubscribe) setupRoomListener(currentRoomId);
+                if (geoWatchId === null) startWatchingPosition(currentRoomId, currentPlayerKey, currentDisplayName,
+                    currentColor, isLeader ? 'leader' : 'member');
+                invalidateMapSize();
+            }
+        });
+
+        // Init
+        showLobby();
+        hideAllModals();
+        hideGpsWarning();
+        mapRoomCode.textContent = '------';
+        mapPlayerCount.textContent = '0';
+        console.log('🏍️ Riding Squad ready – smart camera & strict GPS active.');
+    </script>
+</body>
+</html>
