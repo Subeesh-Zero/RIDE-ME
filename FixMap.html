@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riding Squad · Smart Smooth Tracking</title>
+    <title>Riding Squad · Wake Lock & Zoom Fix</title>
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -800,7 +800,7 @@
     <div id="lobby-screen">
         <div class="lobby-icon">🏍️</div>
         <h1 class="title">RIDING SQUAD</h1>
-        <p class="subtitle">Smart Smooth Tracking · Tap‑to‑Track</p>
+        <p class="subtitle">Wake Lock · Zoom Fix</p>
         <div class="lobby-buttons">
             <button class="btn btn-create" id="btnCreateRoom">
                 <i class="fa-solid fa-plus"></i> Create Room
@@ -1024,12 +1024,33 @@
         let lastPushLat = null;
         let lastPushLng = null;
 
-        // ─── LEAFLET MAP INIT (OSM only) ───────────────
+        // ─── WAKE LOCK ─────────────────────────────────
+        let wakeLock = null;
+
+        async function requestWakeLock() {
+            if (!('wakeLock' in navigator)) {
+                console.log('🔒 Wake Lock API not supported');
+                return;
+            }
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                console.log('🔒 Screen wake lock acquired');
+                wakeLock.addEventListener('release', () => {
+                    console.log('🔓 Screen wake lock released');
+                });
+            } catch (err) {
+                console.warn(`⚠️ Wake Lock request failed: ${err.name}, ${err.message}`);
+                wakeLock = null;
+            }
+        }
+
+        // ─── LEAFLET MAP INIT (OSM only, bounce fix) ──
         const map = L.map('map', {
             center: [20.5937, 78.9629],
             zoom: 5,
             zoomControl: true,
             attributionControl: true,
+            bounceAtZoomLimits: false,   // FIX max‑zoom rubber‑band
         });
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1040,12 +1061,22 @@
         function invalidateMapSize() { setTimeout(() => map.invalidateSize(), 250); }
         window.addEventListener('resize', () => map.invalidateSize());
 
-        // ─── MAP INTERACTION CLASS TOGGLING ────────────
-        map.on('movestart', () => {
+        // ─── MAP INTERACTION CLASS TOGGLING (delayed class removal) ──
+        let interactionTimeout = null;
+        map.on('movestart zoomstart', () => {
             document.body.classList.add('map-interacting');
+            if (interactionTimeout) {
+                clearTimeout(interactionTimeout);
+                interactionTimeout = null;
+            }
         });
-        map.on('moveend', () => {
-            document.body.classList.remove('map-interacting');
+        map.on('moveend zoomend', () => {
+            // Delay re‑enabling CSS transition until map truly settles
+            if (interactionTimeout) clearTimeout(interactionTimeout);
+            interactionTimeout = setTimeout(() => {
+                document.body.classList.remove('map-interacting');
+                interactionTimeout = null;
+            }, 250);
         });
 
         // ─── TOAST ─────────────────────────────────────
@@ -1153,6 +1184,7 @@
             mapScreen.classList.add('active');
             leaderboardPanel.classList.add('visible');
             invalidateMapSize();
+            requestWakeLock();   // keep screen on while navigating
         }
 
         function hideAllModals() {
@@ -1984,6 +2016,7 @@
                 if (!roomUnsubscribe) setupRoomListener(currentRoomId);
                 if (geoWatchId === null) startWatchingPosition(currentRoomId, currentPlayerKey, currentDisplayName,
                     currentColor, isLeader ? 'leader' : 'member');
+                requestWakeLock();   // re‑acquire wake lock when page is visible again
                 invalidateMapSize();
             }
         });
@@ -1997,7 +2030,7 @@
         }
         hideAllModals();
         hideGpsWarning();
-        console.log('🏍️ Riding Squad ready – smooth tracking, tap‑to‑track, persistent session.');
+        console.log('🏍️ Riding Squad ready – wake lock, zoom fix, smooth tracking.');
     </script>
 </body>
 </html>
