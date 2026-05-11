@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riding Squad · OpenStreetMap</title>
+    <title>Riding Squad · Glassmorphism & Cyan UI</title>
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -13,7 +13,7 @@
     <style>
         :root {
             --bg: #06060d;
-            --surface-dark: rgba(15, 15, 15, 0.75);
+            --surface: rgba(255, 255, 255, 0.08);
             --surface-2: #1a1a24;
             --surface-3: #222230;
             --accent: #00E5FF;
@@ -27,7 +27,7 @@
             --text: #e2e8f0;
             --text-secondary: #b0bec5;
             --text-muted: #78909c;
-            --border-cyan: rgba(0, 229, 255, 0.3);
+            --border: rgba(255, 255, 255, 0.1);
             --radius: 14px;
             --radius-sm: 10px;
             --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -187,10 +187,10 @@
             display: flex;
         }
         .modal-card {
-            background: var(--surface-dark);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--border-cyan);
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 28px 24px;
             width: 100%;
@@ -215,7 +215,7 @@
             font-size: 1.3rem;
             font-weight: 700;
             text-align: center;
-            color: #FFFFFF;
+            color: var(--text);
             letter-spacing: -0.3px;
         }
         .modal-card .modal-icon {
@@ -235,11 +235,11 @@
             color: var(--text-secondary);
         }
         .input-field input {
-            background: rgba(255, 255, 255, 0.06);
-            border: 2px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--border);
             border-radius: var(--radius-sm);
             padding: 12px 16px;
-            color: #FFFFFF;
+            color: var(--text);
             font-size: 1rem;
             font-family: inherit;
             outline: none;
@@ -277,11 +277,11 @@
         .btn-cancel {
             background: transparent;
             color: var(--text-secondary);
-            border-color: rgba(255, 255, 255, 0.15);
+            border-color: var(--border);
         }
         .btn-cancel:hover {
             border-color: var(--text-muted);
-            color: #FFFFFF;
+            color: var(--text);
         }
         .btn-danger-modal {
             background: var(--danger);
@@ -351,23 +351,23 @@
             z-index: 1;
         }
 
-        /* ── MAP HEADER (dark glass) ──────────────── */
+        /* ── MAP HEADER (glassmorphism) ───────────── */
         .map-header {
             position: absolute;
             top: 16px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 999;
-            background: var(--surface-dark);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--border-cyan);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--border);
             border-radius: 50px;
             padding: 10px 20px;
             display: flex;
             align-items: center;
             gap: 14px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             flex-wrap: wrap;
             justify-content: center;
             transition: all var(--transition);
@@ -382,7 +382,7 @@
             letter-spacing: 0.5px;
         }
         .map-header .room-code-badge {
-            background: rgba(0, 229, 255, 0.08);
+            background: rgba(255, 255, 255, 0.08);
             border: 1px solid var(--accent);
             color: var(--accent);
             padding: 6px 14px;
@@ -399,7 +399,7 @@
             border: none;
             cursor: pointer;
             color: var(--accent);
-            padding: 3px;
+            padding: 2px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -407,16 +407,15 @@
             transition: all var(--transition);
         }
         .copy-room-btn:hover {
-            background: rgba(0, 229, 255, 0.18);
-            transform: scale(1.15);
-            filter: drop-shadow(0 0 6px var(--accent-glow));
+            background: rgba(0, 229, 255, 0.15);
+            transform: scale(1.1);
         }
         .copy-room-btn svg {
-            width: 15px;
-            height: 15px;
+            width: 16px;
+            height: 16px;
         }
         .map-header .player-count {
-            background: rgba(16, 185, 129, 0.1);
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 50px;
             padding: 6px 12px;
             font-size: 0.8rem;
@@ -479,7 +478,7 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 998;
-            background: rgba(249, 115, 22, 0.88);
+            background: rgba(249, 115, 22, 0.85);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             color: #fff;
@@ -498,23 +497,23 @@
             display: flex;
         }
 
-        /* ── DISTANCE LEADERBOARD PANEL (dark glass) ── */
+        /* ── DISTANCE LEADERBOARD PANEL (glassmorphism) ── */
         .leaderboard-panel {
             position: absolute;
             top: 100px;
             right: 16px;
             z-index: 997;
-            background: var(--surface-dark);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--border-cyan);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 14px 16px;
-            min-width: 230px;
-            max-width: 290px;
-            max-height: 48vh;
+            min-width: 220px;
+            max-width: 280px;
+            max-height: 45vh;
             overflow-y: auto;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
             font-size: 0.82rem;
             display: none;
             color: var(--text);
@@ -523,35 +522,31 @@
             display: block;
         }
         .leaderboard-panel h4 {
-            font-size: 0.92rem;
+            font-size: 0.9rem;
             font-weight: 700;
             margin-bottom: 10px;
             color: var(--accent);
             text-align: center;
             letter-spacing: 0.5px;
-            text-transform: uppercase;
         }
         .leaderboard-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 6px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            gap: 8px;
-            min-height: 42px;
+            padding: 7px 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            gap: 6px;
         }
         .leaderboard-item .rider-name {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-weight: 700;
+            gap: 6px;
+            font-weight: 600;
             flex: 1;
             min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            color: #FFFFFF;
-            font-size: 0.84rem;
         }
         .leaderboard-item .rider-name .color-dot {
             width: 10px;
@@ -559,7 +554,6 @@
             border-radius: 50%;
             display: inline-block;
             flex-shrink: 0;
-            box-shadow: 0 0 6px currentColor;
         }
         .leaderboard-item .distance {
             font-weight: 700;
@@ -567,50 +561,48 @@
             font-variant-numeric: tabular-nums;
             white-space: nowrap;
             flex-shrink: 0;
-            font-size: 0.8rem;
         }
         .leaderboard-item .distance.nearby {
             color: #10b981;
         }
-        /* ── EYE ICON (solid white) ──────────────── */
+        /* ── EYE ICON (bright cyan) ──────────────── */
         .eye-icon {
             cursor: pointer;
-            color: #FFFFFF;
+            color: #00E5FF;
             transition: all var(--transition);
             flex-shrink: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             background: transparent;
         }
         .eye-icon:hover {
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(0, 229, 255, 0.2);
             transform: scale(1.15);
-            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+            filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.7));
         }
         .eye-icon.active {
-            color: #FFFFFF;
+            color: #00E5FF;
             filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.9));
-            background: rgba(0, 229, 255, 0.2);
+            background: rgba(0, 229, 255, 0.18);
         }
         .eye-icon svg {
-            width: 15px;
-            height: 15px;
+            width: 16px;
+            height: 16px;
             display: block;
         }
         .leaderboard-item.self {
-            background: rgba(0, 229, 255, 0.07);
+            background: rgba(0, 229, 255, 0.08);
             border-radius: 6px;
         }
         .leaderboard-item.self .distance {
             color: var(--accent);
-            font-weight: 800;
         }
 
-        /* ── FAB: VIEW ALL (cyan circle, dark icon) ── */
+        /* ── PROFESSIONAL FAB: VIEW ALL (cyan) ──── */
         .fab-view-all {
             position: absolute;
             bottom: 28px;
@@ -622,7 +614,7 @@
             background: var(--accent);
             border: none;
             cursor: pointer;
-            box-shadow: 0 6px 22px rgba(0, 229, 255, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 6px 22px rgba(0, 229, 255, 0.45), 0 2px 8px rgba(0, 0, 0, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -632,7 +624,7 @@
         }
         .fab-view-all:hover {
             background: #00bcd4;
-            box-shadow: 0 8px 30px rgba(0, 229, 255, 0.75), 0 4px 12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 8px 30px rgba(0, 229, 255, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5);
             transform: translateY(-2px) scale(1.04);
         }
         .fab-view-all:active {
@@ -743,22 +735,13 @@
                 font-size: 3.5rem;
             }
             .leaderboard-panel {
-                top: 85px;
+                top: 90px;
                 right: 6px;
-                min-width: 175px;
-                max-width: 220px;
+                min-width: 165px;
+                max-width: 210px;
                 font-size: 0.72rem;
                 padding: 10px 10px;
-                max-height: 42vh;
-            }
-            .leaderboard-item {
-                padding: 8px 4px;
-                min-height: 36px;
-                gap: 5px;
-            }
-            .leaderboard-item .rider-name {
-                font-size: 0.75rem;
-                gap: 5px;
+                max-height: 40vh;
             }
             .gps-warning-bar {
                 top: 70px;
@@ -780,12 +763,12 @@
                 height: 24px;
             }
             .eye-icon svg {
-                width: 13px;
-                height: 13px;
+                width: 14px;
+                height: 14px;
             }
             .copy-room-btn svg {
-                width: 13px;
-                height: 13px;
+                width: 14px;
+                height: 14px;
             }
         }
     </style>
@@ -796,7 +779,7 @@
     <div id="lobby-screen">
         <div class="lobby-icon">🏍️</div>
         <h1 class="title">RIDING SQUAD</h1>
-        <p class="subtitle">High-Accuracy GPS · Dark Glass UI</p>
+        <p class="subtitle">High-Accuracy GPS · Cyan Glass UI</p>
         <div class="lobby-buttons">
             <button class="btn btn-create" id="btnCreateRoom">
                 <i class="fa-solid fa-plus"></i> Create Room
@@ -866,7 +849,7 @@
             <div class="modal-icon">⚠️</div>
             <h3>Close This Room?</h3>
             <p style="text-align:center;color:var(--text-secondary);font-size:0.9rem;">
-                This will permanently delete the room and kick out <strong style="color:#FFFFFF;">all members</strong>.
+                This will permanently delete the room and kick out <strong>all members</strong>.
                 This action cannot be undone.
             </p>
             <div class="modal-actions">
@@ -911,9 +894,9 @@
             <h4><i class="fa-solid fa-ruler"></i> Rider Distances</h4>
             <div id="leaderboardList"></div>
         </div>
-        <!-- FAB: VIEW ALL (cyan circle, dark icon) -->
+        <!-- PROFESSIONAL SVG FAB: VIEW ALL (cyan) -->
         <button class="fab-view-all" id="viewAllBtn" title="Fit all riders on screen">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="16 4 20 4 20 8"/>
                 <polyline points="8 20 4 20 4 16"/>
                 <polyline points="20 16 20 20 16 20"/>
@@ -1014,17 +997,15 @@
         let trackedPlayer = null;
         let isFirstLoad = true;
 
-        // ─── LEAFLET MAP INIT WITH SINGLE OSM LAYER ────
+        // ─── LEAFLET MAP INIT ─────────────────────────
         const map = L.map('map', {
             center: [20.5937, 78.9629],
             zoom: 5,
             zoomControl: true,
             attributionControl: true,
         });
-
-        // Single reliable OpenStreetMap tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            attribution: '&copy; OpenStreetMap contributors',
             maxZoom: 19,
         }).addTo(map);
 
@@ -1198,7 +1179,7 @@
             }
         }
 
-        // ── SVG EYE ICON (white) ───────────────────────
+        // ── SVG EYE ICON (cyan #00E5FF) ────────────────
         const eyeSVG = `
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -1210,7 +1191,7 @@
             const distances = [];
             if (myLat == null || myLng == null || isNaN(myLat) || isNaN(myLng)) {
                 leaderboardList.innerHTML =
-                    '<div style="text-align:center;color:var(--text-muted);padding:12px;">Waiting for your location...</div>';
+                    '<div style="text-align:center;color:var(--text-muted);">Waiting for your location...</div>';
                 return;
             }
             const myLatLng = L.latLng(myLat, myLng);
@@ -1312,6 +1293,7 @@
 
                 mapPlayerCount.textContent = activePlayerKeys.size;
 
+                // STRICT ONE‑TIME INITIAL FIT
                 if (isFirstLoad && markersMap.size > 0) {
                     fitAllMarkersOnMap();
                     isFirstLoad = false;
@@ -1809,7 +1791,7 @@
         hideGpsWarning();
         mapRoomCode.textContent = '------';
         mapPlayerCount.textContent = '0';
-        console.log('🏍️ Riding Squad ready – OpenStreetMap, dark glass UI, strict GPS.');
+        console.log('🏍️ Riding Squad ready – glassmorphism, copy room ID, cyan accents.');
     </script>
 </body>
 </html>
