@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riding Squad · Corporate Dashboard</title>
+    <title>Riding Squad · Royal Blue Corporate</title>
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,8 +14,8 @@
         :root {
             --bg: #06060d;
             --surface-dark: rgba(15, 15, 15, 0.8);
-            --accent: #2563EB;
-            --accent-glow: rgba(37, 99, 235, 0.5);
+            --accent: #1d4ed8;
+            --accent-glow: rgba(29, 78, 216, 0.55);
             --primary: #3b82f6;
             --primary-glow: rgba(59, 130, 246, 0.5);
             --danger: #ef4444;
@@ -26,7 +26,7 @@
             --text: #e2e8f0;
             --text-secondary: #b0bec5;
             --text-muted: #78909c;
-            --border-cyan: rgba(37, 99, 235, 0.3);
+            --border-cyan: rgba(29, 78, 216, 0.3);
             --radius: 14px;
             --radius-sm: 10px;
             --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -82,7 +82,7 @@
             font-size: clamp(2rem, 5vw, 3.2rem);
             font-weight: 900;
             letter-spacing: -1px;
-            background: linear-gradient(135deg, #2563EB, #93C5FD, #2563EB);
+            background: linear-gradient(135deg, #1d4ed8, #93c5fd, #1d4ed8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -135,7 +135,7 @@
             animation: pulse-glow 2.5s ease-in-out infinite;
         }
         .btn-create:hover {
-            box-shadow: 0 0 50px rgba(37, 99, 235, 0.8), 0 6px 28px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 50px rgba(29, 78, 216, 0.8), 0 6px 28px rgba(0, 0, 0, 0.6);
             transform: translateY(-2px);
         }
         @keyframes pulse-glow {
@@ -144,7 +144,7 @@
                 box-shadow: 0 0 30px var(--accent-glow), 0 4px 20px rgba(0, 0, 0, 0.5);
             }
             50% {
-                box-shadow: 0 0 50px rgba(37, 99, 235, 0.75), 0 6px 24px rgba(0, 0, 0, 0.55);
+                box-shadow: 0 0 50px rgba(29, 78, 216, 0.75), 0 6px 24px rgba(0, 0, 0, 0.55);
             }
         }
         .btn-join {
@@ -247,7 +247,7 @@
         }
         .input-field input:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+            box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.15);
             background: rgba(255, 255, 255, 0.1);
         }
         .input-field input::placeholder {
@@ -314,7 +314,7 @@
         .gps-spinner {
             width: 16px;
             height: 16px;
-            border: 3px solid rgba(37, 99, 235, 0.3);
+            border: 3px solid rgba(29, 78, 216, 0.3);
             border-top-color: var(--accent);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
@@ -459,7 +459,7 @@
             border-color: var(--accent);
         }
         .btn-leave:hover {
-            background: rgba(37, 99, 235, 0.1);
+            background: rgba(29, 78, 216, 0.1);
             box-shadow: 0 0 20px var(--accent-glow);
         }
         .btn-close-room {
@@ -496,7 +496,7 @@
             display: flex;
         }
 
-        /* ── SQUAD MEMBERS PANEL (bottom‑left, collapsible) ── */
+        /* ── SQUAD MEMBERS PANEL (bottom‑left, collapsible, royal blue header) ── */
         .leaderboard-panel {
             position: absolute;
             bottom: 28px;
@@ -528,13 +528,16 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 14px 16px 10px;
+            padding: 14px 16px 12px;
+            background: var(--accent);
             cursor: pointer;
+            border-top-left-radius: var(--radius);
+            border-top-right-radius: var(--radius);
         }
         .leaderboard-panel .panel-header h4 {
             font-size: 0.92rem;
             font-weight: 700;
-            color: var(--accent);
+            color: #ffffff;
             letter-spacing: 0.5px;
             text-transform: uppercase;
             margin: 0;
@@ -543,7 +546,7 @@
             gap: 6px;
         }
         .leaderboard-panel .toggle-arrow {
-            color: var(--text-secondary);
+            color: #ffffff;
             font-size: 1rem;
             transition: transform 0.3s;
         }
@@ -560,7 +563,7 @@
             opacity: 0;
         }
         .leaderboard-panel .search-container {
-            padding: 0 16px 8px;
+            padding: 10px 16px 8px;
             display: none;
         }
         .leaderboard-panel .search-container.visible {
@@ -579,6 +582,7 @@
         }
         .leaderboard-panel .search-input:focus {
             border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.3);
         }
         .leaderboard-list {
             padding: 0 16px 12px;
@@ -624,7 +628,7 @@
         .leaderboard-item .distance.nearby {
             color: #10b981;
         }
-        /* ── EYE ICON (solid white) ──────────────── */
+        /* ── EYE ICON (solid white, royal blue active) ── */
         .eye-icon {
             cursor: pointer;
             color: #FFFFFF;
@@ -645,8 +649,8 @@
         }
         .eye-icon.active {
             color: #FFFFFF;
-            filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.9));
-            background: rgba(37, 99, 235, 0.2);
+            filter: drop-shadow(0 0 10px rgba(29, 78, 216, 0.9));
+            background: rgba(29, 78, 216, 0.25);
         }
         .eye-icon svg {
             width: 15px;
@@ -654,7 +658,7 @@
             display: block;
         }
         .leaderboard-item.self {
-            background: rgba(37, 99, 235, 0.07);
+            background: rgba(29, 78, 216, 0.08);
             border-radius: 6px;
         }
         .leaderboard-item.self .distance {
@@ -662,7 +666,7 @@
             font-weight: 800;
         }
 
-        /* ── FAB: VIEW ALL (blue circle, white icon) ── */
+        /* ── FAB: VIEW ALL (royal blue circle, white icon) ── */
         .fab-view-all {
             position: absolute;
             bottom: 28px;
@@ -674,7 +678,7 @@
             background: var(--accent);
             border: none;
             cursor: pointer;
-            box-shadow: 0 6px 22px rgba(37, 99, 235, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 6px 22px rgba(29, 78, 216, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -683,13 +687,13 @@
             -webkit-tap-highlight-color: transparent;
         }
         .fab-view-all:hover {
-            background: #1d4ed8;
-            box-shadow: 0 8px 30px rgba(37, 99, 235, 0.75), 0 4px 12px rgba(0, 0, 0, 0.5);
+            background: #1e40af;
+            box-shadow: 0 8px 30px rgba(29, 78, 216, 0.75), 0 4px 12px rgba(0, 0, 0, 0.5);
             transform: translateY(-2px) scale(1.04);
         }
         .fab-view-all:active {
             transform: scale(0.92);
-            box-shadow: 0 3px 12px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 3px 12px rgba(29, 78, 216, 0.4);
         }
         .fab-view-all svg {
             width: 22px;
@@ -2144,7 +2148,7 @@
         }
         hideAllModals();
         hideGpsWarning();
-        console.log('🏍️ Riding Squad ready – corporate dashboard, wake lock, zoom fix.');
+        console.log('🏍️ Riding Squad ready – royal blue corporate, wake lock, zoom fix.');
     </script>
 </body>
 </html>
