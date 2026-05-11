@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riding Squad · Dark Glass UI</title>
+    <title>Riding Squad · Smooth Tracking & OpenStreetMap</title>
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -610,7 +610,7 @@
             font-weight: 800;
         }
 
-        /* ── PROFESSIONAL FAB: VIEW ALL (cyan circle, dark icon) ── */
+        /* ── FAB: VIEW ALL (cyan circle, dark icon) ── */
         .fab-view-all {
             position: absolute;
             bottom: 28px;
@@ -645,10 +645,11 @@
             display: block;
         }
 
-        /* ── CUSTOM MARKER (injected via JS) ──────── */
+        /* ── CUSTOM MARKER (smooth sliding) ────────── */
         .custom-marker {
             background: transparent !important;
             border: none !important;
+            transition: transform 2.5s linear !important;
         }
 
         /* ── TOAST ────────────────────────────────── */
@@ -796,7 +797,7 @@
     <div id="lobby-screen">
         <div class="lobby-icon">🏍️</div>
         <h1 class="title">RIDING SQUAD</h1>
-        <p class="subtitle">High-Accuracy GPS · Dark Glass UI</p>
+        <p class="subtitle">Smooth Tracking · OpenStreetMap</p>
         <div class="lobby-buttons">
             <button class="btn btn-create" id="btnCreateRoom">
                 <i class="fa-solid fa-plus"></i> Create Room
@@ -1014,15 +1015,21 @@
         let trackedPlayer = null;
         let isFirstLoad = true;
 
-        // ─── LEAFLET MAP INIT ─────────────────────────
+        // ─── THROTTLING & ANTI-JITTER ──────────────────
+        let lastPushTime = 0;
+        let lastPushLat = null;
+        let lastPushLng = null;
+
+        // ─── LEAFLET MAP INIT (OSM only) ───────────────
         const map = L.map('map', {
             center: [20.5937, 78.9629],
             zoom: 5,
             zoomControl: true,
             attributionControl: true,
         });
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19,
         }).addTo(map);
 
@@ -1368,15 +1375,19 @@
                 navigator.geolocation.clearWatch(geoWatchId);
                 geoWatchId = null;
             }
+            // Reset throttling state
+            lastPushTime = 0;
+            lastPushLat = null;
+            lastPushLng = null;
         }
 
-        // ─── START WATCHING POSITION (STRICT GPS) ──────
+        // ─── START WATCHING POSITION (STRICT GPS + THROTTLING) ──
         function startWatchingPosition(roomId, playerKey, displayName, color, role) {
             if (!navigator.geolocation) {
                 showToast('Geolocation not supported by your browser.', 'error');
                 return false;
             }
-            stopTracking();
+            stopTracking(); // resets throttling vars
             const playerRef = ref(db, `rooms/${roomId}/players/${playerKey}`);
             if (onDisconnectRef) { onDisconnectRef.cancel().catch(() => {}); }
             onDisconnectRef = onDisconnect(playerRef);
@@ -1385,24 +1396,60 @@
             geoWatchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const { latitude, longitude, accuracy } = position.coords;
+
+                    // NULL ISLAND BLOCK
                     if (latitude === 0 && longitude === 0) {
                         showGpsWarning('Invalid location (Null Island). Please enable GPS outdoors.');
                         return;
                     }
+
+                    // STRICT ACCURACY FILTER (>100m rejected)
                     if (accuracy > 100) {
                         showGpsWarning('Weak GPS Signal. Please go outside under the open sky for accurate tracking.');
                         return;
                     }
+
                     hideGpsWarning();
-                    update(playerRef, {
-                        lat: latitude,
-                        lng: longitude,
-                        accuracy: accuracy,
-                        displayName: displayName,
-                        color: color,
-                        role: role,
-                        updatedAt: Date.now(),
-                    }).catch(err => console.error(err));
+
+                    // ANTI-JITTER & THROTTLING LOGIC
+                    const now = Date.now();
+                    let shouldPush = false;
+
+                    if (lastPushLat === null || lastPushLng === null) {
+                        // First valid location
+                        shouldPush = true;
+                    } else {
+                        const dist = L.latLng(lastPushLat, lastPushLng).distanceTo([latitude, longitude]);
+                        if (dist < 5) {
+                            // Standing still -> ignore
+                            return;
+                        } else if (dist > 20) {
+                            // Significant movement -> push immediately
+                            shouldPush = true;
+                        } else if (now - lastPushTime >= 3000) {
+                            // 3 seconds passed -> push
+                            shouldPush = true;
+                        } else {
+                            // Otherwise skip
+                            return;
+                        }
+                    }
+
+                    if (shouldPush) {
+                        lastPushLat = latitude;
+                        lastPushLng = longitude;
+                        lastPushTime = now;
+
+                        update(playerRef, {
+                            lat: latitude,
+                            lng: longitude,
+                            accuracy: accuracy,
+                            displayName: displayName,
+                            color: color,
+                            role: role,
+                            updatedAt: now,
+                        }).catch(err => console.error(err));
+                    }
                 },
                 (error) => {
                     console.error('❌ Geolocation watch error:', error);
@@ -1454,6 +1501,10 @@
                     role: role,
                     updatedAt: Date.now(),
                 });
+                // Initialize throttling state with this position
+                lastPushLat = latitude;
+                lastPushLng = longitude;
+                lastPushTime = Date.now();
                 return true;
             } catch (err) {
                 if (err.code === 1) {
@@ -1807,7 +1858,7 @@
         hideGpsWarning();
         mapRoomCode.textContent = '------';
         mapPlayerCount.textContent = '0';
-        console.log('🏍️ Riding Squad ready – dark glass UI, white eye icon, cyan accents.');
+        console.log('🏍️ Riding Squad ready – smooth tracking, OSM tiles, strict GPS.');
     </script>
 </body>
 </html>
