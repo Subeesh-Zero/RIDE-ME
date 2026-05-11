@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riding Squad · Smooth Tracking & OpenStreetMap</title>
+    <title>Riding Squad · Persistent Session & Tap‑to‑Track</title>
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,8 +14,6 @@
         :root {
             --bg: #06060d;
             --surface-dark: rgba(15, 15, 15, 0.75);
-            --surface-2: #1a1a24;
-            --surface-3: #222230;
             --accent: #00E5FF;
             --accent-glow: rgba(0, 229, 255, 0.55);
             --primary: #3b82f6;
@@ -797,7 +795,7 @@
     <div id="lobby-screen">
         <div class="lobby-icon">🏍️</div>
         <h1 class="title">RIDING SQUAD</h1>
-        <p class="subtitle">Smooth Tracking · OpenStreetMap</p>
+        <p class="subtitle">Persistent Session · Tap‑to‑Track</p>
         <div class="lobby-buttons">
             <button class="btn btn-create" id="btnCreateRoom">
                 <i class="fa-solid fa-plus"></i> Create Room
@@ -912,7 +910,7 @@
             <h4><i class="fa-solid fa-ruler"></i> Rider Distances</h4>
             <div id="leaderboardList"></div>
         </div>
-        <!-- FAB: VIEW ALL (cyan circle, dark icon) -->
+        <!-- FAB: VIEW ALL -->
         <button class="fab-view-all" id="viewAllBtn" title="Fit all riders on screen">
             <svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="16 4 20 4 20 8"/>
@@ -1000,6 +998,7 @@
             '#3b82f6', '#10b981', '#f59e0b', '#f97316', '#8b5cf6',
             '#ec4899', '#14b8a6', '#6366f1', '#84cc16', '#06b6d4'
         ];
+        const SESSION_KEY = 'ridingSquadSession';
 
         // ─── APPLICATION STATE ─────────────────────────
         let currentRoomId = null;
@@ -1053,6 +1052,51 @@
 
         function hideGpsWarning() {
             gpsWarningBar.classList.remove('visible');
+        }
+
+        // ─── LOCAL STORAGE SESSION ─────────────────────
+        function saveSessionToStorage() {
+            const session = {
+                roomId: currentRoomId,
+                playerKey: currentPlayerKey,
+                displayName: currentDisplayName,
+                color: currentColor,
+                role: isLeader ? 'leader' : 'member',
+            };
+            localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+            console.log('💾 Session saved to localStorage');
+        }
+
+        function clearSessionFromStorage() {
+            localStorage.removeItem(SESSION_KEY);
+            console.log('🗑️ Session cleared from localStorage');
+        }
+
+        function getSessionFromStorage() {
+            try {
+                const raw = localStorage.getItem(SESSION_KEY);
+                if (!raw) return null;
+                const session = JSON.parse(raw);
+                if (session.roomId && session.playerKey && session.displayName) {
+                    return session;
+                }
+                return null;
+            } catch {
+                return null;
+            }
+        }
+
+        // ─── UPDATE EYE ICONS ONLY (no data wipe) ──────
+        function updateEyeIconsInLeaderboard() {
+            const eyeIcons = leaderboardList.querySelectorAll('.eye-icon');
+            eyeIcons.forEach(icon => {
+                const pk = icon.getAttribute('data-player');
+                if (pk === trackedPlayer) {
+                    icon.classList.add('active');
+                } else {
+                    icon.classList.remove('active');
+                }
+            });
         }
 
         // ─── SANITIZE NAME ────────────────────────────
@@ -1146,11 +1190,26 @@
             return `${(meters / 1000).toFixed(1)} km`;
         }
 
-        // ─── UPSERT MARKER ─────────────────────────────
+        // ─── UPSERT MARKER (with tap‑to‑track) ─────────
         function upsertMarker(playerKey, displayName, lat, lng, color, isLeaderMarker, isSelf) {
             if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return;
             const initial = (displayName || playerKey).charAt(0).toUpperCase();
             const size = isLeaderMarker ? 38 : 32;
+
+            const clickHandler = () => {
+                if (isLeaving) return;
+                if (trackedPlayer === playerKey) {
+                    trackedPlayer = null;
+                } else {
+                    trackedPlayer = playerKey;
+                    const m = markersMap.get(playerKey);
+                    if (m) {
+                        const ll = m.getLatLng();
+                        map.setView(ll, map.getZoom(), { animate: true });
+                    }
+                }
+                updateEyeIconsInLeaderboard();
+            };
 
             if (markersMap.has(playerKey)) {
                 const marker = markersMap.get(playerKey);
@@ -1164,6 +1223,8 @@
                         tooltipAnchor: [0, -(size + 6) / 2 - 6],
                     })
                 );
+                marker.off('click');
+                marker.on('click', clickHandler);
                 if (trackedPlayer === playerKey && !isLeaving) {
                     map.setView([lat, lng], map.getZoom(), { animate: true });
                 }
@@ -1176,6 +1237,7 @@
                     tooltipAnchor: [0, -(size + 6) / 2 - 6],
                 });
                 const marker = L.marker([lat, lng], { icon }).addTo(map);
+                marker.on('click', clickHandler);
                 markersMap.set(playerKey, marker);
             }
         }
@@ -1286,6 +1348,7 @@
                     get(ref(db, `rooms/${roomId}`)).then((roomSnap) => {
                         if (!roomSnap.exists() && !isLeaving) {
                             showToast('The room has been closed by the leader.', 'warning');
+                            clearSessionFromStorage();
                             forceReturnToLobby();
                         } else if (!isLeaving) {
                             const staleKeys = new Set(markersMap.keys());
@@ -1375,7 +1438,6 @@
                 navigator.geolocation.clearWatch(geoWatchId);
                 geoWatchId = null;
             }
-            // Reset throttling state
             lastPushTime = 0;
             lastPushLat = null;
             lastPushLng = null;
@@ -1387,7 +1449,7 @@
                 showToast('Geolocation not supported by your browser.', 'error');
                 return false;
             }
-            stopTracking(); // resets throttling vars
+            stopTracking();
             const playerRef = ref(db, `rooms/${roomId}/players/${playerKey}`);
             if (onDisconnectRef) { onDisconnectRef.cancel().catch(() => {}); }
             onDisconnectRef = onDisconnect(playerRef);
@@ -1396,41 +1458,30 @@
             geoWatchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const { latitude, longitude, accuracy } = position.coords;
-
-                    // NULL ISLAND BLOCK
                     if (latitude === 0 && longitude === 0) {
                         showGpsWarning('Invalid location (Null Island). Please enable GPS outdoors.');
                         return;
                     }
-
-                    // STRICT ACCURACY FILTER (>100m rejected)
                     if (accuracy > 100) {
                         showGpsWarning('Weak GPS Signal. Please go outside under the open sky for accurate tracking.');
                         return;
                     }
-
                     hideGpsWarning();
 
-                    // ANTI-JITTER & THROTTLING LOGIC
                     const now = Date.now();
                     let shouldPush = false;
 
                     if (lastPushLat === null || lastPushLng === null) {
-                        // First valid location
                         shouldPush = true;
                     } else {
                         const dist = L.latLng(lastPushLat, lastPushLng).distanceTo([latitude, longitude]);
                         if (dist < 5) {
-                            // Standing still -> ignore
                             return;
                         } else if (dist > 20) {
-                            // Significant movement -> push immediately
                             shouldPush = true;
                         } else if (now - lastPushTime >= 3000) {
-                            // 3 seconds passed -> push
                             shouldPush = true;
                         } else {
-                            // Otherwise skip
                             return;
                         }
                     }
@@ -1501,7 +1552,6 @@
                     role: role,
                     updatedAt: Date.now(),
                 });
-                // Initialize throttling state with this position
                 lastPushLat = latitude;
                 lastPushLng = longitude;
                 lastPushTime = Date.now();
@@ -1564,6 +1614,7 @@
             isFirstLoad = true;
             onDisconnectRef = null;
             isLeaving = false;
+            clearSessionFromStorage();
             showLobby();
             hideAllModals();
             showToast('You have left the room.', 'info');
@@ -1594,9 +1645,90 @@
             isFirstLoad = true;
             onDisconnectRef = null;
             isLeaving = false;
+            clearSessionFromStorage();
             showLobby();
             hideAllModals();
             showToast('Room closed. All members have been removed.', 'success');
+        }
+
+        // ─── PERSISTENT SESSION RESTORE ─────────────────
+        async function restoreSession(session) {
+            console.log('🔄 Attempting session restore for room:', session.roomId);
+
+            // Check if room still exists
+            let roomExists = false;
+            try {
+                const roomSnap = await get(ref(db, `rooms/${session.roomId}`));
+                roomExists = roomSnap.exists();
+            } catch (err) {
+                console.warn('⚠️ Could not verify room existence:', err);
+            }
+
+            if (!roomExists) {
+                console.log('🚫 Room no longer exists – clearing session');
+                clearSessionFromStorage();
+                return false;
+            }
+
+            // Set state
+            currentRoomId = session.roomId;
+            currentPlayerKey = session.playerKey;
+            currentDisplayName = session.displayName;
+            currentColor = session.color;
+            isLeader = (session.role === 'leader');
+            isFirstLoad = false;
+            isLeaving = false;
+
+            // Update UI
+            mapRoomCode.textContent = session.roomId;
+            if (isLeader) {
+                btnCloseRoom.style.display = 'inline-flex';
+                btnLeaveRoom.style.display = 'none';
+            } else {
+                btnCloseRoom.style.display = 'none';
+                btnLeaveRoom.style.display = 'inline-flex';
+            }
+
+            showMapScreen();
+            hideAllModals();
+            hideGpsWarning();
+
+            // Re-add player to room (onDisconnect may have removed them)
+            try {
+                const pos = await getCurrentPositionPromise();
+                const { latitude, longitude, accuracy } = pos.coords;
+                if (!(latitude === 0 && longitude === 0) && accuracy <= 100) {
+                    await set(ref(db, `rooms/${session.roomId}/players/${session.playerKey}`), {
+                        lat: latitude,
+                        lng: longitude,
+                        accuracy: accuracy,
+                        displayName: session.displayName,
+                        color: session.color,
+                        role: session.role,
+                        updatedAt: Date.now(),
+                    });
+                    lastPushLat = latitude;
+                    lastPushLng = longitude;
+                    lastPushTime = Date.now();
+                }
+            } catch {
+                // GPS may not be ready – watchPosition will handle it
+                console.log('📍 Initial position not available on restore – waiting for GPS');
+            }
+
+            // Start tracking and listener
+            startWatchingPosition(session.roomId, session.playerKey, session.displayName, session.color, session.role);
+            setupRoomListener(session.roomId);
+
+            console.log('✅ Session restored successfully');
+            return true;
+        }
+
+        function checkPersistentSession() {
+            const session = getSessionFromStorage();
+            if (!session) return false;
+            restoreSession(session);
+            return true;
         }
 
         // ─── COPY ROOM ID ──────────────────────────────
@@ -1669,6 +1801,7 @@
             showMapScreen();
             startWatchingPosition(roomId, playerKey, displayName, LEADER_COLOR, 'leader');
             setupRoomListener(roomId);
+            saveSessionToStorage();
 
             submitCreate.disabled = false;
             submitCreate.textContent = 'Create Squad';
@@ -1741,13 +1874,14 @@
             showMapScreen();
             startWatchingPosition(roomId, playerKey, displayName, assignedColor, 'member');
             setupRoomListener(roomId);
+            saveSessionToStorage();
 
             submitJoin.disabled = false;
             submitJoin.textContent = 'Join Squad';
             joinGpsLoading.classList.remove('visible');
         }
 
-        // ─── EYE ICON CLICK HANDLER ────────────────────
+        // ─── EYE ICON CLICK HANDLER (FIXED – no data wipe) ──
         leaderboardList.addEventListener('click', (e) => {
             const eyeIcon = e.target.closest('.eye-icon');
             if (!eyeIcon) return;
@@ -1757,29 +1891,27 @@
                     trackedPlayer = null;
                 } else {
                     trackedPlayer = playerKey;
+                    const marker = markersMap.get(playerKey);
+                    if (marker) {
+                        const latlng = marker.getLatLng();
+                        map.setView(latlng, map.getZoom(), { animate: true });
+                    }
                 }
-                const marker = markersMap.get(playerKey);
-                if (marker && trackedPlayer) {
-                    const latlng = marker.getLatLng();
-                    map.setView(latlng, map.getZoom(), { animate: true });
-                }
-                updateDistancesAndLeaderboard({}, null, null);
+                updateEyeIconsInLeaderboard();
             }
         });
 
         // ─── MAP DRAG DISABLES TRACKING ────────────────
         map.on('dragstart', () => {
             trackedPlayer = null;
-            const activeEyes = leaderboardList.querySelectorAll('.eye-icon.active');
-            activeEyes.forEach(icon => icon.classList.remove('active'));
+            updateEyeIconsInLeaderboard();
         });
 
         // ─── VIEW ALL BUTTON ───────────────────────────
         viewAllBtn.addEventListener('click', () => {
             trackedPlayer = null;
             fitAllMarkersOnMap();
-            const activeEyes = leaderboardList.querySelectorAll('.eye-icon.active');
-            activeEyes.forEach(icon => icon.classList.remove('active'));
+            updateEyeIconsInLeaderboard();
         });
 
         // ─── OTHER EVENT LISTENERS ────────────────────
@@ -1852,13 +1984,16 @@
             }
         });
 
-        // Init
-        showLobby();
+        // ─── INIT ──────────────────────────────────────
+        const sessionRestored = checkPersistentSession();
+        if (!sessionRestored) {
+            showLobby();
+            mapRoomCode.textContent = '------';
+            mapPlayerCount.textContent = '0';
+        }
         hideAllModals();
         hideGpsWarning();
-        mapRoomCode.textContent = '------';
-        mapPlayerCount.textContent = '0';
-        console.log('🏍️ Riding Squad ready – smooth tracking, OSM tiles, strict GPS.');
+        console.log('🏍️ Riding Squad ready – persistent session, tap‑to‑track, smooth GPS.');
     </script>
 </body>
 </html>
