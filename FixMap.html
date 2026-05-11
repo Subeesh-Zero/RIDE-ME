@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riding Squad · Persistent Session & Tap‑to‑Track</title>
+    <title>Riding Squad · Smart Smooth Tracking</title>
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -643,11 +643,16 @@
             display: block;
         }
 
-        /* ── CUSTOM MARKER (smooth sliding) ────────── */
+        /* ── CUSTOM MARKER SMOOTH SLIDING ──────────── */
         .custom-marker {
             background: transparent !important;
             border: none !important;
-            transition: transform 2.5s linear !important;
+        }
+        .smooth-marker-move {
+            transition: transform 2.5s linear, opacity 0.3s;
+        }
+        body.map-interacting .smooth-marker-move {
+            transition: none !important;
         }
 
         /* ── TOAST ────────────────────────────────── */
@@ -795,7 +800,7 @@
     <div id="lobby-screen">
         <div class="lobby-icon">🏍️</div>
         <h1 class="title">RIDING SQUAD</h1>
-        <p class="subtitle">Persistent Session · Tap‑to‑Track</p>
+        <p class="subtitle">Smart Smooth Tracking · Tap‑to‑Track</p>
         <div class="lobby-buttons">
             <button class="btn btn-create" id="btnCreateRoom">
                 <i class="fa-solid fa-plus"></i> Create Room
@@ -1035,6 +1040,14 @@
         function invalidateMapSize() { setTimeout(() => map.invalidateSize(), 250); }
         window.addEventListener('resize', () => map.invalidateSize());
 
+        // ─── MAP INTERACTION CLASS TOGGLING ────────────
+        map.on('movestart', () => {
+            document.body.classList.add('map-interacting');
+        });
+        map.on('moveend', () => {
+            document.body.classList.remove('map-interacting');
+        });
+
         // ─── TOAST ─────────────────────────────────────
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
@@ -1064,12 +1077,12 @@
                 role: isLeader ? 'leader' : 'member',
             };
             localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-            console.log('💾 Session saved to localStorage');
+            console.log('💾 Session saved');
         }
 
         function clearSessionFromStorage() {
             localStorage.removeItem(SESSION_KEY);
-            console.log('🗑️ Session cleared from localStorage');
+            console.log('🗑️ Session cleared');
         }
 
         function getSessionFromStorage() {
@@ -1190,7 +1203,7 @@
             return `${(meters / 1000).toFixed(1)} km`;
         }
 
-        // ─── UPSERT MARKER (with tap‑to‑track) ─────────
+        // ─── UPSERT MARKER (with tap‑to‑track & smooth class) ──
         function upsertMarker(playerKey, displayName, lat, lng, color, isLeaderMarker, isSelf) {
             if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return;
             const initial = (displayName || playerKey).charAt(0).toUpperCase();
@@ -1217,7 +1230,7 @@
                 marker.setIcon(
                     L.divIcon({
                         html: buildMarkerHTML(color, initial, isLeaderMarker, isSelf),
-                        className: 'custom-marker',
+                        className: 'custom-marker smooth-marker-move',
                         iconSize: [size + 6, size + 6],
                         iconAnchor: [(size + 6) / 2, (size + 6) / 2],
                         tooltipAnchor: [0, -(size + 6) / 2 - 6],
@@ -1231,7 +1244,7 @@
             } else {
                 const icon = L.divIcon({
                     html: buildMarkerHTML(color, initial, isLeaderMarker, isSelf),
-                    className: 'custom-marker',
+                    className: 'custom-marker smooth-marker-move',
                     iconSize: [size + 6, size + 6],
                     iconAnchor: [(size + 6) / 2, (size + 6) / 2],
                     tooltipAnchor: [0, -(size + 6) / 2 - 6],
@@ -1654,8 +1667,6 @@
         // ─── PERSISTENT SESSION RESTORE ─────────────────
         async function restoreSession(session) {
             console.log('🔄 Attempting session restore for room:', session.roomId);
-
-            // Check if room still exists
             let roomExists = false;
             try {
                 const roomSnap = await get(ref(db, `rooms/${session.roomId}`));
@@ -1663,14 +1674,12 @@
             } catch (err) {
                 console.warn('⚠️ Could not verify room existence:', err);
             }
-
             if (!roomExists) {
                 console.log('🚫 Room no longer exists – clearing session');
                 clearSessionFromStorage();
                 return false;
             }
 
-            // Set state
             currentRoomId = session.roomId;
             currentPlayerKey = session.playerKey;
             currentDisplayName = session.displayName;
@@ -1679,7 +1688,6 @@
             isFirstLoad = false;
             isLeaving = false;
 
-            // Update UI
             mapRoomCode.textContent = session.roomId;
             if (isLeader) {
                 btnCloseRoom.style.display = 'inline-flex';
@@ -1693,7 +1701,6 @@
             hideAllModals();
             hideGpsWarning();
 
-            // Re-add player to room (onDisconnect may have removed them)
             try {
                 const pos = await getCurrentPositionPromise();
                 const { latitude, longitude, accuracy } = pos.coords;
@@ -1712,14 +1719,11 @@
                     lastPushTime = Date.now();
                 }
             } catch {
-                // GPS may not be ready – watchPosition will handle it
                 console.log('📍 Initial position not available on restore – waiting for GPS');
             }
 
-            // Start tracking and listener
             startWatchingPosition(session.roomId, session.playerKey, session.displayName, session.color, session.role);
             setupRoomListener(session.roomId);
-
             console.log('✅ Session restored successfully');
             return true;
         }
@@ -1993,7 +1997,7 @@
         }
         hideAllModals();
         hideGpsWarning();
-        console.log('🏍️ Riding Squad ready – persistent session, tap‑to‑track, smooth GPS.');
+        console.log('🏍️ Riding Squad ready – smooth tracking, tap‑to‑track, persistent session.');
     </script>
 </body>
 </html>
