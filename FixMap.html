@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riding Squad · Dark Glass UI</title>
+    <title>Riding Squad · Professional Map Layers</title>
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -351,6 +351,25 @@
             z-index: 1;
         }
 
+        /* Override Leaflet layer control style to match dark theme */
+        .leaflet-control-layers {
+            background: var(--surface-dark) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--border-cyan) !important;
+            border-radius: var(--radius-sm) !important;
+            color: var(--text) !important;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5) !important;
+        }
+        .leaflet-control-layers label {
+            color: var(--text) !important;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .leaflet-control-layers-selector {
+            accent-color: var(--accent);
+        }
+
         /* ── MAP HEADER (dark glass) ──────────────── */
         .map-header {
             position: absolute;
@@ -610,7 +629,7 @@
             font-weight: 800;
         }
 
-        /* ── PROFESSIONAL FAB: VIEW ALL (cyan circle, dark icon) ── */
+        /* ── FAB: VIEW ALL (cyan circle, dark icon) ── */
         .fab-view-all {
             position: absolute;
             bottom: 28px;
@@ -1014,17 +1033,52 @@
         let trackedPlayer = null;
         let isFirstLoad = true;
 
-        // ─── LEAFLET MAP INIT ─────────────────────────
+        // ─── LEAFLET MAP INIT WITH MULTIPLE LAYERS ─────
         const map = L.map('map', {
             center: [20.5937, 78.9629],
             zoom: 5,
             zoomControl: true,
             attributionControl: true,
         });
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
-            maxZoom: 19,
-        }).addTo(map);
+
+        // Base layers
+        const standardLayer = L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '&copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ',
+                maxZoom: 19,
+                detectRetina: true,
+            }
+        );
+
+        const satelliteLayer = L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+                maxZoom: 19,
+                detectRetina: true,
+            }
+        );
+
+        const darkLayer = L.tileLayer(
+            'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 19,
+                detectRetina: true,
+            }
+        );
+
+        // Set default layer
+        standardLayer.addTo(map);
+
+        // Layer control
+        const baseLayers = {
+            "Standard": standardLayer,
+            "Satellite": satelliteLayer,
+            "Dark": darkLayer,
+        };
+        L.control.layers(baseLayers, null, { position: 'topright', collapsed: true }).addTo(map);
+
+        // Override layer control styles already defined via CSS
 
         function invalidateMapSize() { setTimeout(() => map.invalidateSize(), 250); }
         window.addEventListener('resize', () => map.invalidateSize());
@@ -1807,7 +1861,7 @@
         hideGpsWarning();
         mapRoomCode.textContent = '------';
         mapPlayerCount.textContent = '0';
-        console.log('🏍️ Riding Squad ready – dark glass UI, white eye icon, cyan accents.');
+        console.log('🏍️ Riding Squad ready – high-definition map layers, dark glass UI, strict GPS.');
     </script>
 </body>
 </html>
