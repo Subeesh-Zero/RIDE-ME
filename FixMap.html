@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riding Squad · VPECom Blue Navbar</title>
+    <title>Riding Squad · Pro Smooth Tracking</title>
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -13,10 +13,11 @@
     <style>
         :root {
             --bg: #06060d;
-            --surface-dark: rgba(15, 15, 20, 0.75);
+            --surface-dark: rgba(15, 20, 30, 0.75);
             --vpecom-blue: #1A73E8;
+            --navbar-blue: #0047AB;
             --accent: #1A73E8;
-            --accent-glow: rgba(26, 115, 232, 0.5);
+            --accent-glow: rgba(26, 115, 232, 0.55);
             --danger: #ef4444;
             --danger-glow: rgba(239, 68, 68, 0.5);
             --warning: #f97316;
@@ -25,7 +26,7 @@
             --text: #e2e8f0;
             --text-secondary: #b0bec5;
             --text-muted: #78909c;
-            --border-vpecom: rgba(26, 115, 232, 0.3);
+            --border-glass: rgba(255, 255, 255, 0.15);
             --radius: 14px;
             --radius-sm: 10px;
             --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -47,22 +48,23 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* ── TOP NAVBAR ───────────────────────────── */
+        /* ── TOP NAVBAR (deep blue) ──────────────── */
         .top-navbar {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             height: 50px;
-            background: rgba(26, 115, 232, 0.96);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            background: var(--navbar-blue);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
             z-index: 10000;
             border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
         .top-navbar .logo {
             font-weight: 800;
@@ -86,25 +88,26 @@
             transition: background 0.2s;
         }
         .top-navbar .menu-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
         }
 
-        /* ── NAVBAR DROPDOWN ──────────────────────── */
+        /* ── NAVBAR DROPDOWN (glassmorphism) ─────── */
         .navbar-dropdown {
             position: fixed;
-            top: 50px;
+            top: 55px;
             right: 10px;
-            background: rgba(26, 115, 232, 0.96);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border-radius: 10px;
+            background: rgba(0, 71, 171, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 14px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
             z-index: 10001;
             display: none;
             flex-direction: column;
-            min-width: 180px;
+            min-width: 200px;
             padding: 8px 0;
+            overflow: hidden;
         }
         .navbar-dropdown.visible {
             display: flex;
@@ -112,10 +115,11 @@
         .navbar-dropdown a {
             color: #ffffff;
             text-decoration: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             font-size: 0.9rem;
             font-weight: 500;
             transition: background 0.2s;
+            white-space: nowrap;
         }
         .navbar-dropdown a:hover {
             background: rgba(255, 255, 255, 0.15);
@@ -127,7 +131,7 @@
             inset: 0;
             display: none;
             z-index: 5;
-            margin-top: 50px; /* push map below navbar */
+            margin-top: 50px;
         }
         #map-screen.active {
             display: block;
@@ -138,23 +142,23 @@
             z-index: 1;
         }
 
-        /* ── MAP HEADER (below navbar) ────────────── */
+        /* ── MAP HEADER ───────────────────────────── */
         .map-header {
             position: absolute;
-            top: 15px; /* extra space from navbar edge */
+            top: 15px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 999;
             background: var(--surface-dark);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--border-vpecom);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
             border-radius: 50px;
             padding: 10px 20px;
             display: flex;
             align-items: center;
             gap: 14px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
             flex-wrap: wrap;
             justify-content: center;
             max-width: calc(100vw - 32px);
@@ -168,7 +172,7 @@
             letter-spacing: 0.5px;
         }
         .map-header .room-code-badge {
-            background: rgba(16, 185, 129, 0.08);
+            background: rgba(16, 185, 129, 0.1);
             border: 1px solid var(--green);
             color: var(--green);
             padding: 6px 14px;
@@ -265,9 +269,8 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 998;
-            background: rgba(249, 115, 22, 0.88);
+            background: rgba(249, 115, 22, 0.9);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             color: #fff;
             padding: 8px 18px;
             border-radius: 50px;
@@ -283,7 +286,7 @@
             display: flex;
         }
 
-        /* ── SQUAD MEMBERS PANEL (bottom‑left) ────── */
+        /* ── SQUAD MEMBERS PANEL (glassmorphism) ──── */
         .leaderboard-panel {
             position: absolute;
             bottom: 28px;
@@ -291,21 +294,20 @@
             top: auto;
             right: auto;
             z-index: 997;
-            background: rgba(15, 15, 20, 0.75);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--border-vpecom);
+            background: var(--surface-dark);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
             border-radius: var(--radius);
             padding: 0;
-            min-width: 230px;
-            max-width: 290px;
+            min-width: 240px;
+            max-width: 300px;
             max-height: 48vh;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
             font-size: 0.82rem;
             display: none;
             color: var(--text);
             overflow: hidden;
-            transition: max-height 0.3s ease;
         }
         .leaderboard-panel.visible {
             display: flex;
@@ -315,14 +317,14 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 16px;
+            padding: 14px 16px;
             background: rgba(26, 115, 232, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             cursor: pointer;
         }
         .leaderboard-panel .panel-header h4 {
-            font-size: 0.92rem;
+            font-size: 0.95rem;
             font-weight: 700;
             color: #ffffff;
             letter-spacing: 0.5px;
@@ -330,7 +332,7 @@
             margin: 0;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
         .leaderboard-panel .toggle-arrow {
             color: #ffffff;
@@ -361,7 +363,7 @@
             padding: 8px 12px;
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.1);
             color: #fff;
             font-size: 0.78rem;
             outline: none;
@@ -381,7 +383,7 @@
             padding: 10px 6px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             gap: 8px;
-            min-height: 42px;
+            min-height: 44px;
         }
         .leaderboard-item .rider-name {
             display: flex;
@@ -394,7 +396,7 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             color: #FFFFFF;
-            font-size: 0.84rem;
+            font-size: 0.85rem;
         }
         .leaderboard-item .rider-name .color-dot {
             width: 10px;
@@ -415,7 +417,6 @@
         .leaderboard-item .distance.nearby {
             color: #10b981;
         }
-        /* ── EYE ICON (white, active blue) ────────── */
         .eye-icon {
             cursor: pointer;
             color: #FFFFFF;
@@ -430,14 +431,14 @@
             background: transparent;
         }
         .eye-icon:hover {
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.15);
             transform: scale(1.15);
             filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
         }
         .eye-icon.active {
             color: #FFFFFF;
             filter: drop-shadow(0 0 10px rgba(26, 115, 232, 0.9));
-            background: rgba(26, 115, 232, 0.25);
+            background: rgba(26, 115, 232, 0.3);
         }
         .eye-icon svg {
             width: 15px;
@@ -453,21 +454,21 @@
             font-weight: 800;
         }
 
-        /* ── FAB: VIEW ALL (VPECom blue glass) ───── */
+        /* ── FAB: VIEW ALL (glassmorphism) ────────── */
         .fab-view-all {
             position: absolute;
             bottom: 28px;
             right: 24px;
             z-index: 999;
-            width: 50px;
-            height: 50px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             background: rgba(26, 115, 232, 0.85);
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
             border: none;
             cursor: pointer;
-            box-shadow: 0 6px 22px rgba(26, 115, 232, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 6px 24px rgba(26, 115, 232, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -476,8 +477,8 @@
             -webkit-tap-highlight-color: transparent;
         }
         .fab-view-all:hover {
-            background: rgba(26, 115, 232, 0.95);
-            box-shadow: 0 8px 30px rgba(26, 115, 232, 0.75), 0 4px 12px rgba(0, 0, 0, 0.5);
+            background: #1b6ad3;
+            box-shadow: 0 8px 32px rgba(26, 115, 232, 0.75), 0 4px 12px rgba(0, 0, 0, 0.5);
             transform: translateY(-2px) scale(1.04);
         }
         .fab-view-all:active {
@@ -489,18 +490,6 @@
             height: 22px;
             display: block;
             stroke: white;
-        }
-
-        /* ── CUSTOM MARKER SMOOTH SLIDING ──────────── */
-        .custom-marker {
-            background: transparent !important;
-            border: none !important;
-        }
-        .smooth-marker-move {
-            transition: transform 2.5s linear, opacity 0.3s;
-        }
-        body.map-interacting .smooth-marker-move {
-            transition: none !important;
         }
 
         /* ── TOAST ────────────────────────────────── */
@@ -515,7 +504,7 @@
             pointer-events: none;
         }
         .toast {
-            padding: 11px 18px;
+            padding: 12px 20px;
             border-radius: 50px;
             font-weight: 600;
             font-size: 0.85rem;
@@ -561,7 +550,7 @@
             }
         }
 
-        /* ── LOBBY SCREEN (unchanged) ─────────────── */
+        /* ── LOBBY SCREEN ─────────────────────────── */
         #lobby-screen {
             display: flex;
             flex-direction: column;
@@ -579,7 +568,6 @@
             font-size: 5rem;
             animation: float 3s ease-in-out infinite;
             filter: drop-shadow(0 0 30px var(--accent-glow));
-            line-height: 1;
         }
         @keyframes float {
             0%,
@@ -593,20 +581,17 @@
         #lobby-screen .title {
             font-size: clamp(2rem, 5vw, 3.2rem);
             font-weight: 900;
-            letter-spacing: -1px;
             background: linear-gradient(135deg, #1A73E8, #A8D1FF, #1A73E8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             filter: drop-shadow(0 0 18px var(--accent-glow));
-            line-height: 1.1;
         }
         #lobby-screen .subtitle {
             color: var(--text-secondary);
             font-size: 0.95rem;
             letter-spacing: 1.5px;
             text-transform: uppercase;
-            margin-top: -8px;
         }
         .lobby-buttons {
             display: flex;
@@ -614,7 +599,6 @@
             gap: 16px;
             width: 100%;
             max-width: 320px;
-            margin-top: 8px;
         }
         .lobby-buttons .btn {
             display: inline-flex;
@@ -628,10 +612,6 @@
             cursor: pointer;
             border: 2px solid transparent;
             transition: all var(--transition);
-            white-space: nowrap;
-            font-family: inherit;
-            letter-spacing: 0.3px;
-            outline: none;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -639,11 +619,10 @@
             background: var(--accent);
             color: #fff;
             border-color: var(--accent);
-            box-shadow: 0 0 30px var(--accent-glow), 0 4px 20px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 30px var(--accent-glow);
         }
         .btn-create:hover {
-            box-shadow: 0 0 50px rgba(26, 115, 232, 0.8), 0 6px 28px rgba(0, 0, 0, 0.6);
-            transform: translateY(-2px);
+            box-shadow: 0 0 50px rgba(26, 115, 232, 0.8);
         }
         .btn-join {
             background: transparent;
@@ -653,10 +632,9 @@
         }
         .btn-join:hover {
             background: rgba(26, 115, 232, 0.08);
-            box-shadow: 0 0 40px rgba(26, 115, 232, 0.7), 0 6px 24px rgba(0, 0, 0, 0.5);
         }
 
-        /* modal styles (unchanged, reused) */
+        /* Modal styles */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -673,8 +651,8 @@
         }
         .modal-card {
             background: var(--surface-dark);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--border-vpecom);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
             border-radius: var(--radius);
             padding: 28px 24px;
             width: 100%;
@@ -741,15 +719,11 @@
             color: #fff;
             border-color: var(--danger);
         }
-        .btn-submit:disabled {
-            opacity: 0.5;
-            pointer-events: none;
-        }
     </style>
 </head>
 <body>
 
-    <!-- ═══════════ TOP NAVBAR ══════════════════════ -->
+    <!-- TOP NAVBAR (deep blue) -->
     <nav class="top-navbar">
         <div class="logo">Ride me</div>
         <button class="menu-btn" id="navbarMenuBtn"><i class="fa-solid fa-bars"></i></button>
@@ -760,11 +734,11 @@
         <a href="#">Help & support</a>
     </div>
 
-    <!-- ═══════════ LOBBY SCREEN ═══════════════════ -->
+    <!-- LOBBY SCREEN -->
     <div id="lobby-screen">
         <div class="lobby-icon">🏍️</div>
         <h1 class="title">RIDING SQUAD</h1>
-        <p class="subtitle">Corporate Fleet Tracking</p>
+        <p class="subtitle">Pro Fleet Tracking</p>
         <div class="lobby-buttons">
             <button class="btn btn-create" id="btnCreateRoom">
                 <i class="fa-solid fa-plus"></i> Create Room
@@ -775,7 +749,7 @@
         </div>
     </div>
 
-    <!-- ═══════════ CREATE ROOM MODAL ══════════════ -->
+    <!-- CREATE ROOM MODAL -->
     <div class="modal-overlay" id="createModal">
         <div class="modal-card">
             <h3>Create Your Squad</h3>
@@ -788,6 +762,9 @@
                 <input type="password" id="createPassword" placeholder="Create an 8-digit numeric password"
                 maxlength="8" inputmode="numeric" autocomplete="off" />
             </div>
+            <div class="gps-loading" id="createGpsLoading">
+                <span class="gps-spinner"></span> Acquiring high-accuracy GPS...
+            </div>
             <div class="modal-actions">
                 <button class="btn btn-cancel" id="cancelCreate">Cancel</button>
                 <button class="btn btn-submit" id="submitCreate">Create Squad</button>
@@ -795,7 +772,7 @@
         </div>
     </div>
 
-    <!-- ═══════════ JOIN ROOM MODAL ════════════════ -->
+    <!-- JOIN ROOM MODAL -->
     <div class="modal-overlay" id="joinModal">
         <div class="modal-card">
             <h3>Join Existing Squad</h3>
@@ -813,6 +790,9 @@
                 <input type="password" id="joinPassword" placeholder="Enter the 8-digit password"
                 maxlength="8" inputmode="numeric" autocomplete="off" />
             </div>
+            <div class="gps-loading" id="joinGpsLoading">
+                <span class="gps-spinner"></span> Acquiring high-accuracy GPS...
+            </div>
             <div class="modal-actions">
                 <button class="btn btn-cancel" id="cancelJoin">Cancel</button>
                 <button class="btn btn-submit" id="submitJoin">Join Squad</button>
@@ -820,7 +800,7 @@
         </div>
     </div>
 
-    <!-- ═══════════ CONFIRM CLOSE ROOM MODAL ═══════ -->
+    <!-- CONFIRM CLOSE ROOM MODAL -->
     <div class="modal-overlay" id="confirmCloseModal">
         <div class="modal-card">
             <h3>Close This Room?</h3>
@@ -832,7 +812,7 @@
         </div>
     </div>
 
-    <!-- ═══════════ MAP SCREEN ════════════════════ -->
+    <!-- MAP SCREEN -->
     <div id="map-screen">
         <div id="map"></div>
         <div class="map-header" id="mapHeader">
@@ -892,6 +872,23 @@
         import { getDatabase, ref, set, get, onValue, remove, update, onDisconnect } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
 
+        // ─── Leaflet Marker slideTo animation ──────
+        L.Marker.prototype.slideTo = function (destLatLng, duration = 2000) {
+            const marker = this;
+            const startLatLng = marker.getLatLng();
+            const startTime = performance.now();
+            const animate = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const lat = startLatLng.lat + (destLatLng.lat - startLatLng.lat) * progress;
+                const lng = startLatLng.lng + (destLatLng.lng - startLatLng.lng) * progress;
+                marker.setLatLng([lat, lng]);
+                if (progress < 1) requestAnimationFrame(animate);
+            };
+            requestAnimationFrame(animate);
+        };
+
+        // ─── Firebase config ───────────────────────
         const firebaseConfig = {
             apiKey: "AIzaSyA4_B45u4OcMFb356vtrtfhN2wg9ddP1po",
             authDomain: "ride-to-me.firebaseapp.com",
@@ -906,7 +903,7 @@
         const db = getDatabase(app);
         const analytics = getAnalytics(app);
 
-        // UI elements
+        // ─── DOM refs ──────────────────────────────
         const lobbyScreen = document.getElementById('lobby-screen');
         const mapScreen = document.getElementById('map-screen');
         const mapRoomCode = document.getElementById('mapRoomCode');
@@ -922,8 +919,10 @@
         const toastContainer = document.getElementById('toastContainer');
         const navbarMenuBtn = document.getElementById('navbarMenuBtn');
         const navbarDropdown = document.getElementById('navbarMenuDropdown');
+        const createGpsLoading = document.getElementById('createGpsLoading');
+        const joinGpsLoading = document.getElementById('joinGpsLoading');
 
-        // Navbar dropdown toggle
+        // ─── Navbar toggle ─────────────────────────
         navbarMenuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             navbarDropdown.classList.toggle('visible');
@@ -934,7 +933,7 @@
             }
         });
 
-        // Application state
+        // ─── State ─────────────────────────────────
         const SESSION_KEY = 'ridingSquadSession';
         let currentRoomId = null, currentPlayerKey = null, currentDisplayName = null, currentColor = null, isLeader = false;
         let geoWatchId = null, roomUnsubscribe = null, onDisconnectRef = null;
@@ -943,25 +942,14 @@
         let wakeLock = null;
         let lastPushTime = 0, lastPushLat = null, lastPushLng = null;
 
-        // Leaflet map
+        // ─── Leaflet map init ──────────────────────
         const map = L.map('map', { center: [20.5937, 78.9629], zoom: 5, zoomControl: true, attributionControl: true, bounceAtZoomLimits: false });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 19 }).addTo(map);
 
         function invalidateMapSize() { setTimeout(() => map.invalidateSize(), 250); }
         window.addEventListener('resize', () => map.invalidateSize());
 
-        // Map interaction class toggling
-        let interactionTimeout;
-        map.on('movestart zoomstart', () => {
-            document.body.classList.add('map-interacting');
-            if (interactionTimeout) { clearTimeout(interactionTimeout); interactionTimeout = null; }
-        });
-        map.on('moveend zoomend', () => {
-            if (interactionTimeout) clearTimeout(interactionTimeout);
-            interactionTimeout = setTimeout(() => { document.body.classList.remove('map-interacting'); interactionTimeout = null; }, 250);
-        });
-
-        // Toast
+        // ─── Toast ─────────────────────────────────
         function showToast(msg, type = 'info') {
             const t = document.createElement('div');
             t.className = `toast ${type}`;
@@ -970,14 +958,14 @@
             setTimeout(() => { if (t.parentNode) t.remove(); }, 3500);
         }
 
-        // Wake lock
+        // ─── Wake Lock ─────────────────────────────
         async function requestWakeLock() {
             if ('wakeLock' in navigator) {
                 try { wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
             }
         }
 
-        // Session storage
+        // ─── Session storage ───────────────────────
         function saveSessionToStorage() {
             localStorage.setItem(SESSION_KEY, JSON.stringify({ roomId: currentRoomId, playerKey: currentPlayerKey, displayName: currentDisplayName, color: currentColor, role: isLeader ? 'leader' : 'member' }));
         }
@@ -986,6 +974,7 @@
             try { const s = JSON.parse(localStorage.getItem(SESSION_KEY)); return s?.roomId ? s : null; } catch { return null; }
         }
 
+        // ─── Eye icon helper ───────────────────────
         function updateEyeIcons() {
             leaderboardList.querySelectorAll('.eye-icon').forEach(icon => {
                 const pk = icon.dataset.player;
@@ -993,6 +982,7 @@
             });
         }
 
+        // ─── Utility ───────────────────────────────
         function sanitizeName(name) { return name.trim().replace(/[\.\$\#\[\]\/]/g, '_').replace(/\s+/g, '_'); }
         function generateRoomId() {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1006,6 +996,7 @@
             });
         }
 
+        // ─── Screens ───────────────────────────────
         function showLobby() {
             mapScreen.classList.remove('active');
             lobbyScreen.style.display = 'flex';
@@ -1023,8 +1014,11 @@
         }
         function hideAllModals() {
             document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+            createGpsLoading.classList.remove('visible');
+            joinGpsLoading.classList.remove('visible');
         }
 
+        // ─── Marker HTML ───────────────────────────
         function buildMarkerHTML(color, initial, isLeaderMarker, isSelf) {
             const size = isLeaderMarker ? 38 : 32;
             const borderWidth = isSelf ? 4 : 3;
@@ -1044,29 +1038,38 @@
             return `${(m / 1000).toFixed(1)} km`;
         }
 
+        // ─── Marker management ─────────────────────
         function upsertMarker(playerKey, displayName, lat, lng, color, isLeaderMarker, isSelf) {
             if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return;
             const initial = (displayName || playerKey).charAt(0).toUpperCase();
             const size = isLeaderMarker ? 38 : 32;
+            const destLatLng = L.latLng(lat, lng);
+
             const clickHandler = () => {
                 if (isLeaving) return;
                 trackedPlayer = (trackedPlayer === playerKey) ? null : playerKey;
                 const m = markersMap.get(playerKey);
-                if (m && trackedPlayer) map.setView(m.getLatLng(), map.getZoom(), { animate: true });
+                if (m && trackedPlayer) {
+                    map.panTo(m.getLatLng(), { animate: true, duration: 2 });
+                }
                 updateEyeIcons();
             };
+
             if (markersMap.has(playerKey)) {
                 const marker = markersMap.get(playerKey);
-                marker.setLatLng([lat, lng]);
-                marker.setIcon(L.divIcon({ html: buildMarkerHTML(color, initial, isLeaderMarker, isSelf), className: 'custom-marker smooth-marker-move', iconSize: [size+6, size+6], iconAnchor: [(size+6)/2, (size+6)/2], tooltipAnchor: [0, -(size+6)/2-6] }));
+                marker.slideTo(destLatLng, 2000);
+                marker.setIcon(L.divIcon({ html: buildMarkerHTML(color, initial, isLeaderMarker, isSelf), className: 'custom-marker', iconSize: [size+6, size+6], iconAnchor: [(size+6)/2, (size+6)/2], tooltipAnchor: [0, -(size+6)/2-6] }));
                 marker.off('click').on('click', clickHandler);
-                if (trackedPlayer === playerKey && !isLeaving) map.setView([lat, lng], map.getZoom(), { animate: true });
+                if (trackedPlayer === playerKey && !isLeaving) {
+                    map.panTo(destLatLng, { animate: true, duration: 2 });
+                }
             } else {
-                const marker = L.marker([lat, lng], { icon: L.divIcon({ html: buildMarkerHTML(color, initial, isLeaderMarker, isSelf), className: 'custom-marker smooth-marker-move', iconSize: [size+6, size+6], iconAnchor: [(size+6)/2, (size+6)/2], tooltipAnchor: [0, -(size+6)/2-6] }) }).addTo(map);
+                const marker = L.marker([lat, lng], { icon: L.divIcon({ html: buildMarkerHTML(color, initial, isLeaderMarker, isSelf), className: 'custom-marker', iconSize: [size+6, size+6], iconAnchor: [(size+6)/2, (size+6)/2], tooltipAnchor: [0, -(size+6)/2-6] }) }).addTo(map);
                 marker.on('click', clickHandler);
                 markersMap.set(playerKey, marker);
             }
         }
+
         function removeMarker(key) { if (markersMap.has(key)) { map.removeLayer(markersMap.get(key)); markersMap.delete(key); } }
         function clearAllMarkers() { markersMap.forEach((m, k) => map.removeLayer(m)); markersMap.clear(); }
         function fitAllMarkers() {
@@ -1076,13 +1079,17 @@
             else map.fitBounds(L.latLngBounds(bounds), { padding: [50, 50], maxZoom: 16, animate: true });
         }
 
+        // ─── Search filter ─────────────────────────
         function filterRiderList(term) {
             leaderboardList.querySelectorAll('.leaderboard-item').forEach(item => {
                 const name = item.dataset.player || '';
                 item.style.display = name.toLowerCase().includes(term) ? '' : 'none';
             });
         }
+        searchInput.addEventListener('input', () => filterRiderList(searchInput.value.trim().toLowerCase()));
 
+        // ─── Leaderboard update ────────────────────
+        const eyeSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
         function updateLeaderboard(playersData, myLat, myLng) {
             const distances = [];
             if (myLat == null || myLng == null || isNaN(myLat) || isNaN(myLng)) {
@@ -1102,10 +1109,10 @@
             else { searchContainer.classList.remove('visible'); searchInput.value = ''; }
             let html = '';
             distances.forEach(item => {
-                html += `<div class="leaderboard-item ${item.isSelf ? 'self' : ''}" data-player="${item.key}">
+                html += `<div class="leaderboard-item ${item.isSelf?'self':''}" data-player="${item.key}">
                     <span class="rider-name"><span class="color-dot" style="background:${item.color};"></span>${item.name}${item.isSelf ? ' (You)' : ''}</span>
-                    <span class="distance ${item.distText === 'Nearby' ? 'nearby' : ''}">${item.distText}</span>
-                    <span class="eye-icon ${trackedPlayer === item.key ? 'active' : ''}" data-player="${item.key}">${eyeSVG}</span>
+                    <span class="distance ${item.distText==='Nearby'?'nearby':''}">${item.distText}</span>
+                    <span class="eye-icon ${trackedPlayer===item.key?'active':''}" data-player="${item.key}">${eyeSVG}</span>
                 </div>`;
             });
             leaderboardList.innerHTML = html;
@@ -1116,15 +1123,13 @@
                 if (marker) {
                     let tip = item.name;
                     if (item.distText !== 'You') tip += ` - ${item.distText}`;
-                    const isLeaderM = playersData[item.key]?.role === 'leader';
-                    if (isLeaderM && !item.isSelf) tip = '👑 ' + tip;
+                    if (playersData[item.key]?.role === 'leader' && !item.isSelf) tip = '👑 ' + tip;
                     marker.setTooltipContent(tip);
                 }
             });
         }
 
-        const eyeSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-
+        // ─── Room listener ─────────────────────────
         function setupRoomListener(roomId) {
             if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
             const playersRef = ref(db, `rooms/${roomId}/players`);
@@ -1211,7 +1216,7 @@
                     update(playerRef, { lat: latitude, lng: longitude, accuracy, displayName, color, role, updatedAt: now });
                 }
             }, (err) => {
-                let msg = ''; if (err.code === 1) msg = 'Permission denied'; else if (err.code === 2 || err.code === 3) msg = 'GPS unavailable, please go outdoors';
+                let msg = ''; if (err.code === 1) msg = 'Permission denied'; else if (err.code === 2 || err.code === 3) msg = 'GPS unavailable';
                 if (msg) showToast(msg, 'error');
             }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
             return true;
@@ -1221,7 +1226,7 @@
             try {
                 const pos = await getCurrentPositionPromise();
                 const { latitude, longitude, accuracy } = pos.coords;
-                if (accuracy > 100) throw new Error('Inaccurate');
+                if (latitude === 0 && longitude === 0 || accuracy > 100) throw new Error('Inaccurate');
                 await set(ref(db, `rooms/${roomId}/players/${playerKey}`), { lat: latitude, lng: longitude, accuracy, displayName, color, role, updatedAt: Date.now() });
                 lastPushLat = latitude; lastPushLng = longitude; lastPushTime = Date.now();
                 return true;
@@ -1275,7 +1280,7 @@
             if (session) restoreSession(session);
         }
 
-        // Event wiring
+        // ─── Event wiring ──────────────────────────
         document.getElementById('btnCreateRoom').addEventListener('click', () => {
             if (currentRoomId) { showToast('Already in a room'); return; }
             document.getElementById('createModal').classList.add('active');
@@ -1286,16 +1291,23 @@
         });
         document.getElementById('cancelCreate').addEventListener('click', () => document.getElementById('createModal').classList.remove('active'));
         document.getElementById('cancelJoin').addEventListener('click', () => document.getElementById('joinModal').classList.remove('active'));
+
+        // Create room flow with loading feedback
         document.getElementById('submitCreate').addEventListener('click', async () => {
             const name = document.getElementById('createName').value.trim();
             const pw = document.getElementById('createPassword').value.trim();
+            const btn = document.getElementById('submitCreate');
+            const loading = document.getElementById('createGpsLoading');
             if (!name || !/^\d{8}$/.test(pw)) { showToast('Invalid input'); return; }
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
+            loading.classList.add('visible');
             const key = sanitizeName(name);
             const roomId = generateRoomId();
             await set(ref(db, `rooms/${roomId}`), { password: pw, leader: name, createdAt: Date.now() });
             currentRoomId = roomId; currentPlayerKey = key; currentDisplayName = name; currentColor = '#ef4444'; isLeader = true;
             const ok = await saveInitialPosition(roomId, key, name, '#ef4444', 'leader');
-            if (!ok) { await remove(ref(db, `rooms/${roomId}`)); return; }
+            if (!ok) { await remove(ref(db, `rooms/${roomId}`)); btn.disabled = false; btn.textContent = 'Create Squad'; loading.classList.remove('visible'); return; }
             mapRoomCode.textContent = roomId;
             btnCloseRoom.style.display = 'inline-flex'; btnLeaveRoom.style.display = 'none';
             document.getElementById('createModal').classList.remove('active');
@@ -1303,22 +1315,30 @@
             startWatchingPosition(roomId, key, name, '#ef4444', 'leader');
             setupRoomListener(roomId);
             saveSessionToStorage();
+            btn.disabled = false; btn.textContent = 'Create Squad'; loading.classList.remove('visible');
         });
+
+        // Join room flow with loading feedback
         document.getElementById('submitJoin').addEventListener('click', async () => {
             const name = document.getElementById('joinName').value.trim();
             const roomId = document.getElementById('joinRoomId').value.trim().toUpperCase();
             const pw = document.getElementById('joinPassword').value.trim();
+            const btn = document.getElementById('submitJoin');
+            const loading = document.getElementById('joinGpsLoading');
             if (!name || roomId.length !== 6 || !/^\d{8}$/.test(pw)) { showToast('Invalid input'); return; }
+            btn.disabled = true;
+            btn.textContent = 'Joining...';
+            loading.classList.add('visible');
             const snap = await get(ref(db, `rooms/${roomId}`));
-            if (!snap.exists()) { showToast('Room not found'); return; }
+            if (!snap.exists()) { showToast('Room not found'); btn.disabled = false; btn.textContent = 'Join Squad'; loading.classList.remove('visible'); return; }
             const roomData = snap.val();
-            if (roomData.password !== pw) { showToast('Wrong password'); return; }
+            if (roomData.password !== pw) { showToast('Wrong password'); btn.disabled = false; btn.textContent = 'Join Squad'; loading.classList.remove('visible'); return; }
             const key = sanitizeName(name);
-            if (roomData.players && roomData.players[key]) { showToast('Name taken'); return; }
+            if (roomData.players && roomData.players[key]) { showToast('Name taken'); btn.disabled = false; btn.textContent = 'Join Squad'; loading.classList.remove('visible'); return; }
             const color = assignColor(roomData.players);
             currentRoomId = roomId; currentPlayerKey = key; currentDisplayName = name; currentColor = color; isLeader = false;
             const ok = await saveInitialPosition(roomId, key, name, color, 'member');
-            if (!ok) return;
+            if (!ok) { btn.disabled = false; btn.textContent = 'Join Squad'; loading.classList.remove('visible'); return; }
             mapRoomCode.textContent = roomId;
             btnCloseRoom.style.display = 'none'; btnLeaveRoom.style.display = 'inline-flex';
             document.getElementById('joinModal').classList.remove('active');
@@ -1326,7 +1346,9 @@
             startWatchingPosition(roomId, key, name, color, 'member');
             setupRoomListener(roomId);
             saveSessionToStorage();
+            btn.disabled = false; btn.textContent = 'Join Squad'; loading.classList.remove('visible');
         });
+
         btnLeaveRoom.addEventListener('click', leaveRoom);
         btnCloseRoom.addEventListener('click', () => document.getElementById('confirmCloseModal').classList.add('active'));
         document.getElementById('cancelClose').addEventListener('click', () => document.getElementById('confirmCloseModal').classList.remove('active'));
@@ -1341,7 +1363,9 @@
             const pk = icon.dataset.player;
             trackedPlayer = (trackedPlayer === pk) ? null : pk;
             const marker = markersMap.get(pk);
-            if (marker && trackedPlayer) map.setView(marker.getLatLng(), map.getZoom(), { animate: true });
+            if (marker && trackedPlayer) {
+                map.panTo(marker.getLatLng(), { animate: true, duration: 2 });
+            }
             updateEyeIcons();
         });
         map.on('dragstart', () => { trackedPlayer = null; updateEyeIcons(); });
@@ -1351,13 +1375,11 @@
             arrow.classList.toggle('fa-chevron-up');
             arrow.classList.toggle('fa-chevron-down');
         });
-        searchInput.addEventListener('input', () => filterRiderList(searchInput.value.trim().toLowerCase()));
         document.getElementById('copyRoomBtn').addEventListener('click', () => {
             const code = mapRoomCode.textContent;
             if (code && code !== '------') { navigator.clipboard.writeText(code).then(() => showToast('Copied!')).catch(() => showToast('Copy failed')); }
         });
 
-        // visibility change
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible' && currentRoomId && currentPlayerKey && !isLeaving) {
                 if (!roomUnsubscribe) setupRoomListener(currentRoomId);
@@ -1367,7 +1389,7 @@
             }
         });
 
-        // init
+        // ─── Init ──────────────────────────────────
         const restored = getSessionFromStorage() ? await restoreSession(getSessionFromStorage()) : false;
         if (!restored) {
             showLobby();
