@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riding Squad · Pro Smooth Tracking</title>
+    <title>Riding Squad · Premium Animations & Pro Tracking</title>
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,10 +14,11 @@
         :root {
             --bg: #06060d;
             --surface-dark: rgba(15, 20, 30, 0.75);
-            --vpecom-blue: #1A73E8;
-            --navbar-blue: #0047AB;
-            --accent: #1A73E8;
-            --accent-glow: rgba(26, 115, 232, 0.55);
+            /* LIGHTER ROYAL BLUE (exact #2A7AFE) */
+            --vpecom-blue: #2A7AFE;
+            --navbar-blue: #2A7AFE;
+            --accent: #2A7AFE;
+            --accent-glow: rgba(42, 122, 254, 0.55);
             --danger: #ef4444;
             --danger-glow: rgba(239, 68, 68, 0.5);
             --warning: #f97316;
@@ -46,6 +47,24 @@
             overflow: hidden;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ── GLOBAL BUTTON BASE (prevents text wrap) ─── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 24px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;           /* NEVER break into two lines */
         }
 
         /* ── TOP NAVBAR (deep blue) ──────────────── */
@@ -96,7 +115,7 @@
             position: fixed;
             top: 55px;
             right: 10px;
-            background: rgba(0, 71, 171, 0.9);
+            background: rgba(42, 122, 254, 0.9);  /* new accent blue */
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-radius: 14px;
@@ -250,7 +269,7 @@
             border-color: var(--accent);
         }
         .btn-leave:hover {
-            background: rgba(26, 115, 232, 0.1);
+            background: rgba(42, 122, 254, 0.1);
             box-shadow: 0 0 20px var(--accent-glow);
         }
         .btn-close-room {
@@ -318,7 +337,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 14px 16px;
-            background: rgba(26, 115, 232, 0.85);
+            background: rgba(42, 122, 254, 0.85);  /* new accent */
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             cursor: pointer;
@@ -371,7 +390,7 @@
         }
         .leaderboard-panel .search-input:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.3);
+            box-shadow: 0 0 0 2px rgba(42, 122, 254, 0.3);
         }
         .leaderboard-list {
             padding: 0 16px 12px;
@@ -437,8 +456,8 @@
         }
         .eye-icon.active {
             color: #FFFFFF;
-            filter: drop-shadow(0 0 10px rgba(26, 115, 232, 0.9));
-            background: rgba(26, 115, 232, 0.3);
+            filter: drop-shadow(0 0 10px rgba(42, 122, 254, 0.9));
+            background: rgba(42, 122, 254, 0.3);
         }
         .eye-icon svg {
             width: 15px;
@@ -446,7 +465,7 @@
             display: block;
         }
         .leaderboard-item.self {
-            background: rgba(26, 115, 232, 0.08);
+            background: rgba(42, 122, 254, 0.08);
             border-radius: 6px;
         }
         .leaderboard-item.self .distance {
@@ -463,12 +482,12 @@
             width: 52px;
             height: 52px;
             border-radius: 50%;
-            background: rgba(26, 115, 232, 0.85);
+            background: rgba(42, 122, 254, 0.85);
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
             border: none;
             cursor: pointer;
-            box-shadow: 0 6px 24px rgba(26, 115, 232, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 6px 24px rgba(42, 122, 254, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -477,13 +496,13 @@
             -webkit-tap-highlight-color: transparent;
         }
         .fab-view-all:hover {
-            background: #1b6ad3;
-            box-shadow: 0 8px 32px rgba(26, 115, 232, 0.75), 0 4px 12px rgba(0, 0, 0, 0.5);
+            background: #1e60d6;
+            box-shadow: 0 8px 32px rgba(42, 122, 254, 0.75), 0 4px 12px rgba(0, 0, 0, 0.5);
             transform: translateY(-2px) scale(1.04);
         }
         .fab-view-all:active {
             transform: scale(0.92);
-            box-shadow: 0 3px 12px rgba(26, 115, 232, 0.4);
+            box-shadow: 0 3px 12px rgba(42, 122, 254, 0.4);
         }
         .fab-view-all svg {
             width: 22px;
@@ -581,7 +600,7 @@
         #lobby-screen .title {
             font-size: clamp(2rem, 5vw, 3.2rem);
             font-weight: 900;
-            background: linear-gradient(135deg, #1A73E8, #A8D1FF, #1A73E8);
+            background: linear-gradient(135deg, #2A7AFE, #A8D1FF, #2A7AFE);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -600,38 +619,50 @@
             width: 100%;
             max-width: 320px;
         }
-        .lobby-buttons .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 14px 24px;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all var(--transition);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+
         .btn-create {
             background: var(--accent);
             color: #fff;
             border-color: var(--accent);
             box-shadow: 0 0 30px var(--accent-glow);
+            animation: pulse-glow 2.5s ease-in-out infinite;
         }
         .btn-create:hover {
-            box-shadow: 0 0 50px rgba(26, 115, 232, 0.8);
+            box-shadow: 0 0 50px rgba(42, 122, 254, 0.8), 0 6px 28px rgba(0, 0, 0, 0.6);
+            transform: translateY(-2px);
+        }
+        @keyframes pulse-glow {
+            0%,
+            100% {
+                box-shadow: 0 0 30px var(--accent-glow), 0 4px 20px rgba(0, 0, 0, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 50px rgba(42, 122, 254, 0.75), 0 6px 24px rgba(0, 0, 0, 0.55);
+            }
         }
         .btn-join {
             background: transparent;
             color: var(--accent);
             border-color: var(--accent);
             box-shadow: 0 0 20px var(--accent-glow);
+            animation: pulse-glow-blue 3s ease-in-out infinite;
         }
         .btn-join:hover {
-            background: rgba(26, 115, 232, 0.08);
+            background: rgba(42, 122, 254, 0.08);
+            box-shadow: 0 0 40px rgba(42, 122, 254, 0.7), 0 6px 24px rgba(0, 0, 0, 0.5);
+            transform: translateY(-2px);
+        }
+        @keyframes pulse-glow-blue {
+            0%,
+            100% {
+                box-shadow: 0 0 20px var(--accent-glow), 0 4px 16px rgba(0, 0, 0, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 35px rgba(42, 122, 254, 0.65), 0 6px 20px rgba(0, 0, 0, 0.45);
+            }
+        }
+        .btn:active {
+            transform: scale(0.95);
         }
 
         /* Modal styles */
@@ -661,6 +692,17 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
+            animation: slideUp 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         .modal-card h3 {
             font-size: 1.3rem;
@@ -690,7 +732,7 @@
         }
         .input-field input:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.15);
+            box-shadow: 0 0 0 4px rgba(42, 122, 254, 0.15);
             background: rgba(255, 255, 255, 0.1);
         }
         .modal-actions {
@@ -703,21 +745,105 @@
             padding: 12px 16px;
             font-size: 0.85rem;
             border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         .btn-submit {
             background: var(--accent);
             color: #fff;
             border-color: var(--accent);
         }
+        .btn-submit:hover {
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
         .btn-cancel {
             background: transparent;
             color: var(--text-secondary);
-            border-color: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.4) !important;   /* FIX: clearly visible border */
+        }
+        .btn-cancel:hover {
+            border-color: var(--text-muted);
+            color: #FFFFFF;
         }
         .btn-danger-modal {
             background: var(--danger);
             color: #fff;
             border-color: var(--danger);
+        }
+        .btn-danger-modal:hover {
+            box-shadow: 0 0 30px var(--danger-glow);
+        }
+        .btn-submit:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        /* ── RECONNECT OVERLAY (new) ─────────────── */
+        #reconnectOverlay {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            background: rgba(15, 20, 30, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 50px;
+            border: 1px solid var(--border-glass);
+            display: none;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        #reconnectOverlay.visible {
+            display: flex;
+        }
+
+        /* ── GPS LOADING INDICATOR ────────────────── */
+        .gps-loading {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            padding: 8px;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.85rem;
+            animation: pulse-text 1.5s ease-in-out infinite;
+        }
+        .gps-loading.visible {
+            display: flex;
+        }
+        .gps-spinner {
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(42, 122, 254, 0.3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        @keyframes pulse-text {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
         }
     </style>
 </head>
@@ -738,7 +864,7 @@
     <div id="lobby-screen">
         <div class="lobby-icon">🏍️</div>
         <h1 class="title">RIDING SQUAD</h1>
-        <p class="subtitle">Pro Fleet Tracking</p>
+        <p class="subtitle">Premium Pro Tracking</p>
         <div class="lobby-buttons">
             <button class="btn btn-create" id="btnCreateRoom">
                 <i class="fa-solid fa-plus"></i> Create Room
@@ -804,7 +930,9 @@
     <div class="modal-overlay" id="confirmCloseModal">
         <div class="modal-card">
             <h3>Close This Room?</h3>
-            <p style="text-align:center;color:var(--text-secondary);">This will permanently delete the room and kick out all members.</p>
+            <p style="text-align:center;color:var(--text-secondary);">
+                This will permanently delete the room and kick out <strong style="color:#FFFFFF;">all members</strong>.
+            </p>
             <div class="modal-actions">
                 <button class="btn btn-cancel" id="cancelClose">Go Back</button>
                 <button class="btn btn-danger-modal" id="confirmClose">Yes, Delete Room</button>
@@ -841,6 +969,12 @@
             <i class="fa-solid fa-triangle-exclamation"></i>
             <span id="gpsWarningText">Weak GPS Signal.</span>
         </div>
+
+        <!-- RECONNECT OVERLAY (new) -->
+        <div id="reconnectOverlay">
+            <span class="gps-spinner"></span> Reconnecting...
+        </div>
+
         <div class="leaderboard-panel visible" id="leaderboardPanel">
             <div class="panel-header" id="panelHeader">
                 <h4><i class="fa-solid fa-users"></i> Squad Members</h4>
@@ -921,6 +1055,7 @@
         const navbarDropdown = document.getElementById('navbarMenuDropdown');
         const createGpsLoading = document.getElementById('createGpsLoading');
         const joinGpsLoading = document.getElementById('joinGpsLoading');
+        const reconnectOverlay = document.getElementById('reconnectOverlay');
 
         // ─── Navbar toggle ─────────────────────────
         navbarMenuBtn.addEventListener('click', (e) => {
@@ -1004,6 +1139,7 @@
             searchContainer.classList.remove('visible');
             trackedPlayer = null;
             isFirstLoad = true;
+            reconnectOverlay.classList.remove('visible');  // hide reconnect when leaving
         }
         function showMapScreen() {
             lobbyScreen.style.display = 'none';
@@ -1134,6 +1270,9 @@
             if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
             const playersRef = ref(db, `rooms/${roomId}/players`);
             roomUnsubscribe = onValue(playersRef, (snap) => {
+                // When data arrives, connection is re-established → hide reconnect overlay
+                reconnectOverlay.classList.remove('visible');
+
                 if (isLeaving) return;
                 const data = snap.val();
                 if (!data) {
@@ -1183,6 +1322,7 @@
             leaderboardList.innerHTML = ''; searchContainer.classList.remove('visible');
             leaderboardPanel.classList.remove('visible');
             trackedPlayer = null; isFirstLoad = true;
+            reconnectOverlay.classList.remove('visible');
             showLobby(); hideAllModals();
             isLeaving = false;
         }
@@ -1380,12 +1520,18 @@
             if (code && code !== '------') { navigator.clipboard.writeText(code).then(() => showToast('Copied!')).catch(() => showToast('Copy failed')); }
         });
 
+        // ─── Reconnect overlay on visibility change ───
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible' && currentRoomId && currentPlayerKey && !isLeaving) {
-                if (!roomUnsubscribe) setupRoomListener(currentRoomId);
-                if (geoWatchId === null) startWatchingPosition(currentRoomId, currentPlayerKey, currentDisplayName, currentColor, isLeader ? 'leader' : 'member');
-                requestWakeLock();
-                invalidateMapSize();
+            if (document.visibilityState === 'visible') {
+                if (currentRoomId && currentPlayerKey && !isLeaving) {
+                    // Show reconnecting overlay until Firebase listener fires
+                    reconnectOverlay.classList.add('visible');
+
+                    if (!roomUnsubscribe) setupRoomListener(currentRoomId);
+                    if (geoWatchId === null) startWatchingPosition(currentRoomId, currentPlayerKey, currentDisplayName, currentColor, isLeader ? 'leader' : 'member');
+                    requestWakeLock();
+                    invalidateMapSize();
+                }
             }
         });
 
